@@ -1,6 +1,5 @@
 "use client";
 
-import { HTMLAttributes } from "react";
 import { motion, HTMLMotionProps } from "framer-motion";
 
 interface GlassCardProps extends HTMLMotionProps<"div"> {
@@ -21,11 +20,11 @@ export function GlassCard({
   if (intensity === "light") baseClass = "glass-card";
   if (intensity === "cyber") baseClass = "glass-cyber";
 
-  const hoverClass = hoverEffect ? "hover-glow-cyan transition-all duration-300" : "";
+  const hoverClass = hoverEffect ? "hover-glow-cyan transition-all duration-200" : "";
 
   return (
     <motion.div 
-      className={`${baseClass} ${hoverClass} rounded-2xl ${className}`}
+      className={`${baseClass} ${hoverClass} rounded-xl ${className}`}
       {...props}
     >
       {children}

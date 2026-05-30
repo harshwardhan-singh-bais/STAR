@@ -90,7 +90,7 @@ function ArchitectureDiagram() {
       ctx.fillText(layer.name, startX + 16, y + 32);
 
       ctx.font = '10px "JetBrains Mono", monospace';
-      ctx.fillStyle = "#94A3B8";
+      ctx.fillStyle = "#64748B";
       ctx.fillText(layer.tech, startX + 16, y + 48);
 
       // Items
@@ -111,11 +111,14 @@ function ArchitectureDiagram() {
       });
     });
 
-    animRef.current = requestAnimationFrame(draw);
   }, []);
 
   useEffect(() => {
-    animRef.current = requestAnimationFrame(draw);
+    const animate = () => {
+      draw();
+      animRef.current = requestAnimationFrame(animate);
+    };
+    animRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animRef.current);
   }, [draw]);
 
@@ -140,28 +143,28 @@ export default function ArchitectureSection() {
   };
 
   return (
-    <section id="architecture" className="relative py-32 overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-b from-[#020617] via-[#0F172A]/30 to-[#020617]" />
-      <div className="absolute inset-0 grid-pattern opacity-10" />
+    <section id="architecture" className="section-shell">
+      <div className="absolute inset-0 bg-gradient-to-b from-[#F8FAFC] via-[#FFFFFF] to-[#F8FAFC]" />
+      <div className="absolute inset-0 grid-pattern opacity-20" />
 
       <div className="relative z-10 max-w-7xl mx-auto px-6">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-16"
+          className="text-center mb-12"
         >
-          <div className="inline-flex items-center gap-2 glass rounded-full px-4 py-2 mb-6">
-            <Server className="w-3 h-3 text-[#06B6D4]" />
-            <span className="text-xs font-mono text-[#06B6D4] tracking-wider">
+          <div className="section-eyebrow mb-6">
+            <Server className="w-3 h-3 text-[#0891B2]" />
+            <span style={{ color: "#0891B2" }}>
               SYSTEM ARCHITECTURE
             </span>
           </div>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
-            <span className="text-white">Built for </span>
+          <h2 className="section-title mb-4">
+            <span>Built for </span>
             <span className="gradient-text">Scale</span>
           </h2>
-          <p className="text-lg text-[#94A3B8] max-w-2xl mx-auto">
+          <p className="section-copy mx-auto">
             Production-grade architecture designed for real-time financial intelligence.
             Every layer optimized for sub-second detection and graph-native analytics.
           </p>
@@ -172,7 +175,7 @@ export default function ArchitectureSection() {
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
-          className="glass rounded-2xl p-6 mb-12"
+          className="surface-card rounded-xl p-6 mb-12"
         >
           <ArchitectureDiagram />
         </motion.div>
@@ -188,15 +191,15 @@ export default function ArchitectureSection() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
                 viewport={{ once: true }}
-                className="glass rounded-2xl p-4 hover:bg-white/[0.04] transition-all group cursor-pointer"
+                className="surface-card rounded-xl p-4 hover:bg-[#F8FAFC] transition-all group cursor-pointer"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-white/[0.03] flex items-center justify-center group-hover:bg-[#00F5FF]/10 transition-colors">
-                    <Icon className="w-5 h-5 text-[#94A3B8] group-hover:text-[#00F5FF] transition-colors" />
+                  <div className="w-10 h-10 rounded-xl bg-[#F8FAFC] flex items-center justify-center group-hover:bg-[#0891B2]/10 transition-colors">
+                    <Icon className="w-5 h-5 text-[#64748B] group-hover:text-[#0891B2] transition-colors" />
                   </div>
                   <div>
-                    <div className="text-sm font-semibold text-white">{tech.name}</div>
-                    <div className="text-[10px] font-mono text-[#94A3B8] uppercase">
+                    <div className="text-sm font-semibold text-[#0F172A]">{tech.name}</div>
+                    <div className="text-[10px] font-mono text-[#64748B] uppercase">
                       {tech.category}
                     </div>
                   </div>

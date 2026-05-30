@@ -41,16 +41,16 @@ export function Sidebar() {
     <motion.aside
       initial={{ width: 260 }}
       animate={{ width: sidebarOpen ? 260 : 80 }}
-      className="h-screen sticky top-0 left-0 bg-[#020617]/90 backdrop-blur-md border-r border-white/5 flex flex-col z-50 overflow-hidden"
+      className="h-screen sticky top-0 left-0 bg-white/95 backdrop-blur-md border-r border-[#E2E8F0] flex flex-col z-50 overflow-hidden shadow-[0_0_24px_rgba(15,23,42,0.03)]"
     >
       {/* Logo Area */}
-      <div className="h-16 flex items-center px-6 border-b border-white/5 shrink-0">
+      <div className="h-16 flex items-center px-6 border-b border-[#E2E8F0] shrink-0 bg-white/70">
         <Link href="/" className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[#00F5FF]/10 flex items-center justify-center border border-[#00F5FF]/20 shadow-[0_0_15px_rgba(0,245,255,0.2)]">
-            <Hexagon className="w-5 h-5 text-[#00F5FF]" />
+          <div className="w-8 h-8 rounded-lg bg-[#1E40AF]/10 flex items-center justify-center border border-[#1E40AF]/20">
+            <Hexagon className="w-5 h-5 text-[#1E40AF]" />
           </div>
           {sidebarOpen && (
-            <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="font-bold text-lg tracking-widest text-white font-display">
+            <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="font-bold text-lg tracking-widest text-[#0F172A] font-display">
               STAR
             </motion.span>
           )}
@@ -66,12 +66,12 @@ export function Sidebar() {
           return (
             <Link key={link.href} href={link.href}>
               <div
-                className={`flex items-center px-3 py-3 rounded-xl transition-all duration-300 group cursor-pointer ${
-                  isActive ? "bg-[#00F5FF]/10" : "hover:bg-white/5"
+                className={`flex items-center px-3 py-3 rounded-xl transition-all duration-200 group cursor-pointer ${
+                  isActive ? "bg-[#1E40AF]/10" : "hover:bg-[#F1F5F9]"
                 }`}
               >
                 <div className={`flex items-center justify-center w-6 h-6 shrink-0 ${
-                  isActive ? "text-[#00F5FF]" : "text-[#94A3B8] group-hover:text-white"
+                  isActive ? "text-[#1E40AF]" : "text-[#64748B] group-hover:text-[#0F172A]"
                 }`}>
                   <Icon className="w-5 h-5" />
                 </div>
@@ -81,7 +81,7 @@ export function Sidebar() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     className={`ml-3 text-sm font-medium whitespace-nowrap ${
-                      isActive ? "text-[#00F5FF]" : "text-[#94A3B8] group-hover:text-white"
+                      isActive ? "text-[#1E40AF]" : "text-[#64748B] group-hover:text-[#0F172A]"
                     }`}
                   >
                     {link.label}
@@ -89,7 +89,7 @@ export function Sidebar() {
                 )}
 
                 {isActive && sidebarOpen && (
-                  <motion.div layoutId="active-indicator" className="ml-auto w-1.5 h-1.5 rounded-full bg-[#00F5FF] shadow-[0_0_8px_#00F5FF]" />
+                  <motion.div layoutId="active-indicator" className="ml-auto w-1.5 h-1.5 rounded-full bg-[#1E40AF]" />
                 )}
               </div>
             </Link>
@@ -98,10 +98,10 @@ export function Sidebar() {
       </nav>
 
       {/* Collapse Toggle */}
-      <div className="p-4 border-t border-white/5 shrink-0">
+      <div className="p-4 border-t border-[#E2E8F0] shrink-0 bg-white/70">
         <button 
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="w-full flex items-center justify-center p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-[#94A3B8]"
+          className="w-full flex items-center justify-center p-2 rounded-lg bg-[#F8FAFC] hover:bg-[#E2E8F0] transition-colors text-[#64748B]"
         >
           <span className="text-xs font-mono">{sidebarOpen ? "COLLAPSE" : "EXPAND"}</span>
         </button>

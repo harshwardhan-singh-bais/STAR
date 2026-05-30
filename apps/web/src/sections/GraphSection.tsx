@@ -1,22 +1,21 @@
 "use client";
 
-import { motion, useInView } from "framer-motion";
-import { useRef, useEffect, useState, useCallback } from "react";
-import { GitBranch, Search, Maximize2, Radar, Network } from "lucide-react";
-import { GRAPH_NODES, GRAPH_LINKS, COLORS } from "@/lib/constants";
+import { motion } from "framer-motion";
+import { useRef, useEffect, useState, useCallback, useMemo } from "react";
+import { Search, Maximize2, Radar, Network } from "lucide-react";
+import { GRAPH_NODES, GRAPH_LINKS } from "@/lib/constants";
 
 function InteractiveGraph() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<number>(0);
   const timeRef = useRef(0);
   const [selectedPath, setSelectedPath] = useState<number>(0);
-  const [hoveredNode, setHoveredNode] = useState<string | null>(null);
 
-  const paths = [
+  const paths = useMemo(() => [
     ["ACC-4521", "ACC-7833", "ACC-9877", "ACC-5590", "ACC-4521"], // circular
     ["ACC-9877", "ACC-1102", "ACC-4521"],                          // 2-hop
     ["ACC-5590", "ACC-7744", "ACC-7833"],                          // branch
-  ];
+  ], []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -80,19 +79,19 @@ function InteractiveGraph() {
 
       if (isInPath) {
         const gradient = ctx.createLinearGradient(src.x, src.y, tgt.x, tgt.y);
-        gradient.addColorStop(0, "rgba(244, 63, 94, 0.7)");
-        gradient.addColorStop(0.5, "rgba(249, 115, 22, 0.8)");
-        gradient.addColorStop(1, "rgba(244, 63, 94, 0.7)");
+        gradient.addColorStop(0, "rgba(220, 38, 38, 0.7)");
+        gradient.addColorStop(0.5, "rgba(234, 88, 12, 0.8)");
+        gradient.addColorStop(1, "rgba(220, 38, 38, 0.7)");
         ctx.strokeStyle = gradient;
         ctx.lineWidth = 2;
-        ctx.shadowColor = "rgba(244, 63, 94, 0.4)";
+        ctx.shadowColor = "rgba(220, 38, 38, 0.4)";
         ctx.shadowBlur = 12;
       } else if (link.suspicious) {
-        ctx.strokeStyle = "rgba(249, 115, 22, 0.15)";
+        ctx.strokeStyle = "rgba(234, 88, 12, 0.15)";
         ctx.lineWidth = 0.8;
         ctx.shadowBlur = 0;
       } else {
-        ctx.strokeStyle = "rgba(0, 245, 255, 0.06)";
+        ctx.strokeStyle = "rgba(30, 64, 175, 0.06)";
         ctx.lineWidth = 0.4;
         ctx.shadowBlur = 0;
       }
@@ -109,8 +108,8 @@ function InteractiveGraph() {
 
           ctx.beginPath();
           ctx.arc(px, py, 3.5, 0, Math.PI * 2);
-          ctx.fillStyle = "rgba(244, 63, 94, 0.9)";
-          ctx.shadowColor = "#F43F5E";
+          ctx.fillStyle = "rgba(220, 38, 38, 0.9)";
+          ctx.shadowColor = "#DC2626";
           ctx.shadowBlur = 10;
           ctx.fill();
           ctx.shadowBlur = 0;
@@ -123,7 +122,7 @@ function InteractiveGraph() {
               const ty = src.y + (tgt.y - src.y) * tp;
               ctx.beginPath();
               ctx.arc(tx, ty, 2.5 - t * 0.6, 0, Math.PI * 2);
-              ctx.fillStyle = `rgba(244, 63, 94, ${0.4 - t * 0.1})`;
+              ctx.fillStyle = `rgba(220, 38, 38, ${0.4 - t * 0.1})`;
               ctx.fill();
             }
           }
@@ -141,8 +140,8 @@ function InteractiveGraph() {
       const baseRadius = isInPath ? 10 : 4 + (node.risk / 100) * 5;
       const radius = baseRadius * pulse;
 
-      const communityColors = ["#F43F5E", "#00F5FF", "#10B981"];
-      const nodeColor = isInPath ? "#F43F5E" : communityColors[node.community] || "#94A3B8";
+      const communityColors = ["#DC2626", "#1E40AF", "#059669"];
+      const nodeColor = isInPath ? "#DC2626" : communityColors[node.community] || "#64748B";
 
       // Glow halo
       if (node.risk > 60 || isInPath) {
@@ -159,15 +158,15 @@ function InteractiveGraph() {
       ctx.beginPath();
       ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
       ctx.fillStyle = isInPath
-        ? `rgba(244, 63, 94, ${0.85 * pulse})`
+        ? `rgba(220, 38, 38, ${0.85 * pulse})`
         : node.community === 0
-        ? `rgba(0, 245, 255, ${0.7 * pulse})`
+        ? `rgba(30, 64, 175, ${0.7 * pulse})`
         : node.community === 1
-        ? `rgba(59, 130, 246, ${0.6 * pulse})`
-        : `rgba(16, 185, 129, ${0.5 * pulse})`;
+        ? `rgba(37, 99, 235, ${0.6 * pulse})`
+        : `rgba(5, 150, 105, ${0.5 * pulse})`;
 
       if (isInPath) {
-        ctx.shadowColor = "#F43F5E";
+        ctx.shadowColor = "#DC2626";
         ctx.shadowBlur = 20;
       }
       ctx.fill();
@@ -177,7 +176,7 @@ function InteractiveGraph() {
       if (isInPath) {
         ctx.beginPath();
         ctx.arc(pos.x, pos.y, radius + 2, 0, Math.PI * 2);
-        ctx.strokeStyle = "rgba(244, 63, 94, 0.4)";
+        ctx.strokeStyle = "rgba(220, 38, 38, 0.4)";
         ctx.lineWidth = 1.5;
         ctx.stroke();
       }
@@ -185,36 +184,39 @@ function InteractiveGraph() {
       // Label
       if (radius > 6 || isInPath) {
         ctx.font = `${isInPath ? "bold " : ""}${isInPath ? 11 : 9}px "JetBrains Mono", monospace`;
-        ctx.fillStyle = isInPath ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.45)";
+        ctx.fillStyle = isInPath ? "rgba(15,23,42,0.95)" : "rgba(15,23,42,0.65)";
         ctx.textAlign = "center";
         ctx.fillText(node.name, pos.x, pos.y + radius + 14);
       }
     });
 
-    animRef.current = requestAnimationFrame(draw);
   }, [selectedPath, paths]);
 
   useEffect(() => {
-    animRef.current = requestAnimationFrame(draw);
+    const animate = () => {
+      draw();
+      animRef.current = requestAnimationFrame(animate);
+    };
+    animRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animRef.current);
   }, [draw]);
 
   const pathLabels = ["Circular Ring (4-hop)", "Multi-hop Trace (2-hop)", "Branch Pattern (2-hop)"];
-  const pathColors = ["#F43F5E", "#F97316", "#A855F7"];
+  const pathColors = ["#DC2626", "#EA580C", "#4F46E5"];
 
   return (
-    <div className="relative w-full h-[520px] rounded-2xl overflow-hidden"
+    <div className="relative w-full h-[520px] rounded-xl overflow-hidden"
       style={{
-        background: "rgba(13,20,36,0.85)",
-        border: "1px solid rgba(0,245,255,0.08)",
+        background: "rgba(248,250,252,0.9)",
+        border: "1px solid rgba(226,232,240,0.8)",
         backdropFilter: "blur(20px)",
       }}
     >
       {/* Header */}
       <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Network className="w-4 h-4 text-[#00F5FF]" />
-          <span className="text-[10px] font-mono text-[#00F5FF] tracking-[0.12em]">
+          <Network className="w-4 h-4 text-[#1E40AF]" />
+          <span className="text-[10px] font-mono text-[#1E40AF] tracking-[0.12em]">
             GRAPH EXPLORER · MULTI-HOP TRACER
           </span>
         </div>
@@ -224,15 +226,15 @@ function InteractiveGraph() {
             initial={{ opacity: 0, x: 10 }}
             animate={{ opacity: 1, x: 0 }}
             className="text-[9px] font-mono px-2 py-1 rounded-lg font-bold"
-            style={{ color: pathColors[selectedPath], backgroundColor: `${pathColors[selectedPath]}15`, border: `1px solid ${pathColors[selectedPath]}25` }}
+            style={{ color: pathColors[selectedPath], backgroundColor: `${pathColors[selectedPath]}10`, border: `1px solid ${pathColors[selectedPath]}20` }}
           >
             {pathLabels[selectedPath]}
           </motion.span>
-          <button className="p-1.5 rounded-lg glass hover:bg-white/10 transition-colors">
-            <Search className="w-3 h-3 text-[#94A3B8]" />
+          <button className="p-1.5 rounded-lg glass hover:bg-[#F1F5F9] transition-colors">
+            <Search className="w-3 h-3 text-[#64748B]" />
           </button>
-          <button className="p-1.5 rounded-lg glass hover:bg-white/10 transition-colors">
-            <Maximize2 className="w-3 h-3 text-[#94A3B8]" />
+          <button className="p-1.5 rounded-lg glass hover:bg-[#F1F5F9] transition-colors">
+            <Maximize2 className="w-3 h-3 text-[#64748B]" />
           </button>
         </div>
       </div>
@@ -242,16 +244,16 @@ function InteractiveGraph() {
       {/* Legend */}
       <div className="absolute bottom-4 left-4 flex items-center gap-4 text-[9px] font-mono">
         <div className="flex items-center gap-1.5">
-          <div className="w-2 h-2 rounded-full bg-[#F43F5E]" style={{ boxShadow: "0 0 6px rgba(244,63,94,0.6)" }} />
-          <span className="text-[#475569]">Suspicious Cluster</span>
+          <div className="w-2 h-2 rounded-full bg-[#DC2626]" style={{ boxShadow: "0 0 6px rgba(220,38,38,0.4)" }} />
+          <span className="text-[#64748B]">Suspicious Cluster</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-2 h-2 rounded-full bg-[#00F5FF]" style={{ boxShadow: "0 0 6px rgba(0,245,255,0.4)" }} />
-          <span className="text-[#475569]">Monitored</span>
+          <div className="w-2 h-2 rounded-full bg-[#1E40AF]" style={{ boxShadow: "0 0 6px rgba(30,64,175,0.3)" }} />
+          <span className="text-[#64748B]">Monitored</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-2 h-2 rounded-full bg-[#10B981]" />
-          <span className="text-[#475569]">Legitimate</span>
+          <div className="w-2 h-2 rounded-full bg-[#059669]" />
+          <span className="text-[#64748B]">Legitimate</span>
         </div>
       </div>
 
@@ -278,62 +280,59 @@ export default function GraphSection() {
     {
       title: "Multi-hop Tracing",
       desc: "Follow money through N intermediaries. Reconstruct the complete laundering chain with weighted path analysis and Cypher queries.",
-      color: "#00F5FF",
+      color: "#1E40AF",
       icon: "→",
     },
     {
       title: "Circular Detection",
       desc: "Detect money loops: A→B→C→A. The smoking gun of round-tripping laundering, found automatically by cycle detection algorithms.",
-      color: "#F43F5E",
+      color: "#DC2626",
       icon: "↺",
     },
     {
       title: "Community Detection",
       desc: "Louvain algorithm reveals tightly-knit clusters — potential mule rings and shell company networks hiding in plain sight.",
-      color: "#A855F7",
+      color: "#4F46E5",
       icon: "◎",
     },
     {
       title: "Risk Propagation",
       desc: "PageRank-based risk spreading through the network. One suspicious node raises the risk of all its neighbors.",
-      color: "#F97316",
+      color: "#EA580C",
       icon: "⟨⟩",
     },
     {
       title: "GNN Classification",
       desc: "GraphSAGE neural network learns suspicious patterns from topology. P(fraud) = 0.91 for ACC-4521's transaction cluster.",
-      color: "#14B8A6",
+      color: "#0D9488",
       icon: "∿",
     },
   ];
 
   return (
-    <section id="graph" className="relative py-32 overflow-hidden" ref={ref}>
-      <div className="absolute inset-0 bg-gradient-to-b from-[#020617] via-[#0F172A]/60 to-[#020617]" />
-      <div className="absolute inset-0 grid-pattern opacity-15" />
-
-      {/* Ambient */}
-      <div className="absolute bottom-0 right-0 w-[700px] h-[700px] rounded-full ambient-orb-purple opacity-10 pointer-events-none" />
+    <section id="graph" className="section-shell" ref={ref}>
+      <div className="absolute inset-0 bg-gradient-to-b from-[#F8FAFC] via-[#FFFFFF] to-[#F8FAFC]" />
+      <div className="absolute inset-0 grid-pattern opacity-20" />
 
       <div className="relative z-10 max-w-7xl mx-auto px-6">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-16"
+          className="text-center mb-12"
         >
-          <div className="inline-flex items-center gap-2 glass rounded-full px-4 py-2 mb-6">
-            <Radar className="w-3 h-3 text-[#A855F7]" />
-            <span className="text-xs font-mono text-[#A855F7] tracking-[0.12em]">
+          <div className="section-eyebrow mb-6">
+            <Radar className="w-3 h-3 text-[#4F46E5]" />
+            <span style={{ color: "#4F46E5" }}>
               GRAPH INTELLIGENCE ENGINE
             </span>
           </div>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
-            <span className="text-white">See What Legacy </span>
+          <h2 className="section-title mb-4">
+            <span>See What Legacy </span>
             <br className="hidden md:block" />
             <span className="gradient-text">Systems Miss</span>
           </h2>
-          <p className="text-lg text-[#94A3B8] max-w-2xl mx-auto leading-relaxed">
+          <p className="section-copy mx-auto">
             Graph-native intelligence reveals hidden connections that flat-table AML systems
             simply cannot detect. Multi-hop paths, circular patterns, and community
             structures — visible in seconds.
@@ -361,9 +360,9 @@ export default function GraphSection() {
                 whileInView={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.08 }}
                 viewport={{ once: true }}
-                className="group p-4 rounded-2xl cursor-pointer transition-all duration-300"
+                className="group p-4 rounded-xl cursor-pointer transition-all duration-300 surface-card"
                 style={{
-                  background: "rgba(13,20,36,0.7)",
+                  background: "rgba(255,255,255,0.7)",
                   border: `1px solid ${cap.color}15`,
                   borderLeft: `2px solid ${cap.color}60`,
                   backdropFilter: "blur(10px)",
@@ -374,7 +373,7 @@ export default function GraphSection() {
                   (e.currentTarget as HTMLElement).style.borderLeftColor = cap.color;
                 }}
                 onMouseLeave={e => {
-                  (e.currentTarget as HTMLElement).style.background = "rgba(13,20,36,0.7)";
+                  (e.currentTarget as HTMLElement).style.background = "rgba(248,250,252,0.9)";
                   (e.currentTarget as HTMLElement).style.borderColor = `${cap.color}15`;
                   (e.currentTarget as HTMLElement).style.borderLeftColor = `${cap.color}60`;
                 }}
@@ -385,7 +384,7 @@ export default function GraphSection() {
                     {cap.title}
                   </h4>
                 </div>
-                <p className="text-xs text-[#475569] leading-relaxed group-hover:text-[#94A3B8] transition-colors">
+                <p className="text-xs text-[#475569] leading-relaxed group-hover:text-[#0F172A] transition-colors">
                   {cap.desc}
                 </p>
               </motion.div>
@@ -397,12 +396,12 @@ export default function GraphSection() {
               whileInView={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
               viewport={{ once: true }}
-              className="p-3 rounded-xl text-center"
-              style={{ background: "rgba(20,184,166,0.05)", border: "1px solid rgba(20,184,166,0.12)" }}
+              className="surface-card p-3 rounded-xl text-center"
+              style={{ background: "rgba(13,148,136,0.05)", border: "1px solid rgba(13,148,136,0.12)" }}
             >
-              <div className="text-[10px] font-mono text-[#14B8A6] mb-1">POWERED BY</div>
-              <div className="text-sm font-bold text-white">Neo4j · GraphSAGE · Louvain</div>
-              <div className="text-[9px] font-mono text-[#475569] mt-0.5">Native graph database · GNN · Community detection</div>
+              <div className="text-[10px] font-mono text-[#0D9488] mb-1">POWERED BY</div>
+              <div className="text-sm font-bold text-[#0F172A]">Neo4j · GraphSAGE · Louvain</div>
+              <div className="text-[9px] font-mono text-[#64748B] mt-0.5">Native graph database · GNN · Community detection</div>
             </motion.div>
           </div>
         </div>

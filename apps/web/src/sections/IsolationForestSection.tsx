@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useInView, useAnimation } from "framer-motion";
+import { motion, useInView } from "framer-motion";
 import { useRef, useState, useEffect, useCallback } from "react";
 import { Brain, TreePine, Activity, Target, Zap, TrendingUp } from "lucide-react";
 
@@ -40,7 +40,6 @@ function IsolationTreeCanvas() {
 
       // Tree highlight for suspicious (trees 0, 3, 7)
       const isSuspicious = [0, 3, 7].includes(t);
-      const treeColor = isSuspicious ? "#F43F5E" : "#00F5FF";
       const pulse = Math.sin(time * 2 + t * 0.5) * 0.3 + 0.7;
 
       // Draw isolation tree as vertical branch structure
@@ -54,8 +53,8 @@ function IsolationTreeCanvas() {
         ctx.moveTo(x, y);
         ctx.lineTo(ex, ey);
         ctx.strokeStyle = isSuspicious
-          ? `rgba(244, 63, 94, ${(0.15 + depth * 0.08) * pulse})`
-          : `rgba(0, 245, 255, ${(0.1 + depth * 0.06) * pulse})`;
+          ? `rgba(220, 38, 38, ${(0.15 + depth * 0.08) * pulse})`
+          : `rgba(30, 64, 175, ${(0.1 + depth * 0.06) * pulse})`;
         ctx.lineWidth = depth * 0.4;
         ctx.stroke();
 
@@ -69,8 +68,8 @@ function IsolationTreeCanvas() {
       ctx.moveTo(tx, baseY);
       ctx.lineTo(tx, baseY - treeH * 0.35);
       ctx.strokeStyle = isSuspicious
-        ? `rgba(244, 63, 94, ${0.6 * pulse})`
-        : `rgba(0, 245, 255, ${0.3 * pulse})`;
+        ? `rgba(220, 38, 38, ${0.6 * pulse})`
+        : `rgba(30, 64, 175, ${0.3 * pulse})`;
       ctx.lineWidth = isSuspicious ? 1.5 : 0.8;
       ctx.stroke();
 
@@ -80,7 +79,7 @@ function IsolationTreeCanvas() {
       // Root glow
       if (isSuspicious) {
         const grad = ctx.createRadialGradient(tx, baseY, 0, tx, baseY, 20);
-        grad.addColorStop(0, `rgba(244, 63, 94, 0.2)`);
+        grad.addColorStop(0, `rgba(220, 38, 38, 0.2)`);
         grad.addColorStop(1, "transparent");
         ctx.fillStyle = grad;
         ctx.fillRect(tx - 20, baseY - 20, 40, 40);
@@ -93,14 +92,17 @@ function IsolationTreeCanvas() {
     const pathY = (h - 10) * (1 - pathProgress * 0.6);
     ctx.beginPath();
     ctx.arc(suspiciousX, pathY, 4 * (1 - pathProgress * 0.5), 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(244, 63, 94, ${0.8 * (1 - pathProgress)})`;
+    ctx.fillStyle = `rgba(220, 38, 38, ${0.8 * (1 - pathProgress)})`;
     ctx.fill();
 
-    animRef.current = requestAnimationFrame(draw);
   }, []);
 
   useEffect(() => {
-    animRef.current = requestAnimationFrame(draw);
+    const animate = () => {
+      draw();
+      animRef.current = requestAnimationFrame(animate);
+    };
+    animRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animRef.current);
   }, [draw]);
 
@@ -270,11 +272,9 @@ function LiveScoringFeed() {
     { id: "ACC-9877", score: 0.83, trees: 254, label: "ANOMALY", color: "#F97316" },
     { id: "ACC-6612", score: 0.21, trees: 58, label: "NORMAL", color: "#10B981" },
   ]);
-  const [tick, setTick] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setTick(t => t + 1);
       // Slightly fluctuate top scores
       setEntries(prev => prev.map((e, i) => ({
         ...e,
@@ -290,45 +290,45 @@ function LiveScoringFeed() {
   }, []);
 
   return (
-    <div className="space-y-2">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
       {entries.map((entry, i) => (
         <motion.div
           key={entry.id}
           animate={{ opacity: [0.85, 1, 0.85] }}
           transition={{ duration: 2, delay: i * 0.3, repeat: Infinity }}
-          className="flex items-center gap-3 p-2.5 rounded-lg"
-          style={{ backgroundColor: `${entry.color}08`, border: `1px solid ${entry.color}15` }}
+          className="flex h-full flex-col gap-3 rounded-xl p-3"
+          style={{ backgroundColor: `${entry.color}08`, border: `1px solid ${entry.color}15`, minHeight: "112px" }}
         >
-          <div
-            className="w-2 h-2 rounded-full flex-shrink-0 animate-pulse-glow-red"
-            style={{ backgroundColor: entry.color, boxShadow: `0 0 8px ${entry.color}` }}
-          />
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-mono text-white font-medium">{entry.id}</span>
-              <span
-                className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded"
-                style={{ color: entry.color, backgroundColor: `${entry.color}15` }}
-              >
-                {entry.label}
-              </span>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <div
+                className="w-2 h-2 rounded-full flex-shrink-0 animate-pulse-glow-red"
+                style={{ backgroundColor: entry.color, boxShadow: `0 0 8px ${entry.color}` }}
+              />
+              <span className="text-xs font-mono text-[#0F172A] font-medium truncate">{entry.id}</span>
             </div>
-            <div className="flex items-center gap-2 mt-1">
-              <div className="flex-1 h-1 bg-white/[0.04] rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full rounded-full"
-                  style={{ width: `${entry.score * 100}%`, backgroundColor: entry.color }}
-                  animate={{ width: `${entry.score * 100}%` }}
-                  transition={{ duration: 0.6 }}
-                />
-              </div>
-              <span className="text-[9px] font-mono" style={{ color: entry.color }}>
-                {entry.score.toFixed(3)}
-              </span>
-              <span className="text-[9px] font-mono text-[#475569]">
-                {entry.trees}/300 trees
-              </span>
+            <span
+              className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded"
+              style={{ color: entry.color, backgroundColor: `${entry.color}15` }}
+            >
+              {entry.label}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="flex-1 h-1.5 bg-white/60 rounded-full overflow-hidden">
+              <motion.div
+                className="h-full rounded-full"
+                style={{ width: `${entry.score * 100}%`, backgroundColor: entry.color }}
+                animate={{ width: `${entry.score * 100}%` }}
+                transition={{ duration: 0.6 }}
+              />
             </div>
+            <span className="text-[9px] font-mono" style={{ color: entry.color }}>
+              {entry.score.toFixed(3)}
+            </span>
+          </div>
+          <div className="text-[9px] font-mono text-[#475569]">
+            {entry.trees}/300 trees
           </div>
         </motion.div>
       ))}
@@ -338,8 +338,6 @@ function LiveScoringFeed() {
 
 // ─── Main Section ─────────────────────────────────────────────────────────────
 export default function IsolationForestSection() {
-  const ref = useRef(null);
-
   const allFeatures = [
     "txn_count", "avg_amount", "structuring_ratio", "fan_out_ratio", "pagerank",
     "out_degree", "night_ratio", "txn_velocity", "unique_receivers", "cross_bank_ratio",
@@ -351,14 +349,10 @@ export default function IsolationForestSection() {
   ];
 
   return (
-    <section id="isolation-forest" className="relative py-32 overflow-hidden">
+    <section id="isolation-forest" className="section-shell">
       {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#020617] via-[#030712] to-[#020617]" />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#F8FAFC] via-[#FFFFFF] to-[#F8FAFC]" />
       <div className="absolute inset-0 grid-pattern opacity-20" />
-
-      {/* Ambient orbs */}
-      <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] rounded-full ambient-orb-purple opacity-30 pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] rounded-full ambient-orb-cyan opacity-20 pointer-events-none" />
 
       <div className="relative z-10 max-w-7xl mx-auto px-6">
         {/* Section Header */}
@@ -366,20 +360,20 @@ export default function IsolationForestSection() {
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-20"
+          className="text-center mb-12"
         >
-          <div className="inline-flex items-center gap-2 glass rounded-full px-4 py-2 mb-6">
-            <TreePine className="w-3 h-3 text-[#A855F7]" />
-            <span className="text-xs font-mono text-[#A855F7] tracking-wider">
+          <div className="section-eyebrow mb-6">
+            <TreePine className="w-3 h-3 text-[#4F46E5]" />
+            <span style={{ color: "#4F46E5" }}>
               ISOLATION FOREST ENGINE
             </span>
           </div>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
-            <span className="text-white">300 Trees. 29 Features.</span>
+          <h2 className="section-title mb-6">
+            <span>300 Trees. 29 Features.</span>
             <br />
             <span className="gradient-text">One Verdict.</span>
           </h2>
-          <p className="text-lg text-[#94A3B8] max-w-3xl mx-auto leading-relaxed">
+          <p className="section-copy mx-auto max-w-3xl">
             Our Isolation Forest model isolates suspicious accounts by randomly partitioning
             feature space. Anomalous accounts — structuring, rapid layering, high fan-out —
             are isolated in far fewer splits. Real-time scoring at sub-50ms latency.
@@ -396,37 +390,37 @@ export default function IsolationForestSection() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="glass-cyber rounded-2xl p-6 overflow-hidden relative"
+              className="surface-card rounded-xl p-6 overflow-hidden relative"
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <TreePine className="w-4 h-4 text-[#A855F7]" />
-                  <span className="text-xs font-mono text-[#A855F7] tracking-wider">ISOLATION FOREST · 300 TREES</span>
+                  <TreePine className="w-4 h-4 text-[#4F46E5]" />
+                  <span className="text-xs font-mono text-[#4F46E5] tracking-wider">ISOLATION FOREST · 300 TREES</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F43F5E] opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-[#F43F5E]" />
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#DC2626] opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-[#DC2626]" />
                   </span>
-                  <span className="text-[10px] font-mono text-[#F43F5E]">3 ACCOUNTS ISOLATED</span>
+                  <span className="text-[10px] font-mono text-[#DC2626]">3 ACCOUNTS ISOLATED</span>
                 </div>
               </div>
 
               <IsolationTreeCanvas />
 
-              <div className="flex items-center justify-between mt-3 text-[9px] font-mono text-[#475569]">
+              <div className="flex items-center justify-between mt-3 text-[9px] font-mono text-[#64748B]">
                 <span>← NORMAL (long path to isolation)</span>
-                <span className="text-[#F43F5E]">SUSPICIOUS (short path) →</span>
+                <span className="text-[#DC2626]">SUSPICIOUS (short path) →</span>
               </div>
             </motion.div>
 
             {/* Stats row */}
             <div className="grid grid-cols-4 gap-3">
               {[
-                { label: "Total Trees", value: "300", icon: TreePine, color: "#A855F7", sub: "ensembled" },
-                { label: "AML Features", value: "29", icon: Brain, color: "#00F5FF", sub: "engineered" },
-                { label: "Contamination", value: "5%", icon: Target, color: "#F43F5E", sub: "threshold" },
-                { label: "Score Latency", value: "<50ms", icon: Zap, color: "#10B981", sub: "per account" },
+                { label: "Total Trees", value: "300", icon: TreePine, color: "#4F46E5", sub: "ensembled" },
+                { label: "AML Features", value: "29", icon: Brain, color: "#1E40AF", sub: "engineered" },
+                { label: "Contamination", value: "5%", icon: Target, color: "#DC2626", sub: "threshold" },
+                { label: "Score Latency", value: "<50ms", icon: Zap, color: "#059669", sub: "per account" },
               ].map((stat, i) => {
                 const Icon = stat.icon;
                 return (
@@ -436,12 +430,12 @@ export default function IsolationForestSection() {
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.08 }}
                     viewport={{ once: true }}
-                    className="glass-card rounded-xl p-3 text-center hover-glow-cyan"
+                    className="surface-card rounded-xl p-3 text-center"
                     style={{ borderColor: `${stat.color}20` }}
                   >
                     <Icon className="w-4 h-4 mx-auto mb-1.5" style={{ color: stat.color }} />
-                    <div className="text-xl font-bold font-mono text-white">{stat.value}</div>
-                    <div className="text-[9px] font-mono text-[#475569] uppercase mt-0.5">{stat.label}</div>
+                    <div className="text-xl font-bold font-mono text-[#0F172A]">{stat.value}</div>
+                    <div className="text-[9px] font-mono text-[#64748B] uppercase mt-0.5">{stat.label}</div>
                     <div className="text-[8px] font-mono mt-0.5" style={{ color: stat.color }}>{stat.sub}</div>
                   </motion.div>
                 );
@@ -453,11 +447,11 @@ export default function IsolationForestSection() {
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
-              className="glass rounded-xl p-5"
+              className="surface-card rounded-xl p-5"
             >
               <div className="flex items-center gap-2 mb-4">
-                <Activity className="w-3 h-3 text-[#00F5FF]" />
-                <span className="text-[10px] font-mono text-[#00F5FF] tracking-wider">29 ENGINEERED AML BEHAVIORAL FEATURES</span>
+                <Activity className="w-3 h-3 text-[#1E40AF]" />
+                <span className="text-[10px] font-mono text-[#1E40AF] tracking-wider">29 ENGINEERED AML BEHAVIORAL FEATURES</span>
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {allFeatures.map((feat, i) => {
@@ -473,12 +467,12 @@ export default function IsolationForestSection() {
                       className="text-[9px] font-mono px-2 py-1 rounded-md cursor-default transition-all hover:scale-105"
                       style={{
                         backgroundColor: isHighRisk
-                          ? "rgba(244, 63, 94, 0.1)"
+                          ? "rgba(220, 38, 38, 0.1)"
                           : isMedium
-                          ? "rgba(250, 204, 21, 0.08)"
-                          : "rgba(0, 245, 255, 0.06)",
-                        color: isHighRisk ? "#F43F5E" : isMedium ? "#FACC15" : "#00F5FF",
-                        border: `1px solid ${isHighRisk ? "rgba(244,63,94,0.15)" : isMedium ? "rgba(250,204,21,0.12)" : "rgba(0,245,255,0.1)"}`,
+                          ? "rgba(217, 119, 6, 0.08)"
+                          : "rgba(30, 64, 175, 0.06)",
+                        color: isHighRisk ? "#DC2626" : isMedium ? "#D97706" : "#1E40AF",
+                        border: `1px solid ${isHighRisk ? "rgba(220,38,38,0.15)" : isMedium ? "rgba(217,119,6,0.12)" : "rgba(30,64,175,0.1)"}`,
                       }}
                     >
                       {feat}
@@ -496,18 +490,18 @@ export default function IsolationForestSection() {
               initial={{ opacity: 0, x: 20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              className="glass-cyber rounded-2xl p-5 flex flex-col items-center"
+              className="surface-card rounded-xl p-5 flex flex-col items-center"
             >
-              <div className="text-[10px] font-mono text-[#A855F7] tracking-wider mb-3">ACC-4521 · ANOMALY SCORE</div>
+              <div className="text-[10px] font-mono text-[#4F46E5] tracking-wider mb-3">ACC-4521 · ANOMALY SCORE</div>
               <AnomalyScoreGauge score={94} />
               <div className="mt-3 text-center">
-                <div className="text-[10px] font-mono text-[#475569] mb-1">Isolated in</div>
-                <div className="text-2xl font-bold font-mono text-[#F43F5E]">4.2 <span className="text-sm text-[#94A3B8]">avg splits</span></div>
-                <div className="text-[9px] font-mono text-[#475569] mt-0.5">vs 15.8 avg for normal</div>
+                <div className="text-[10px] font-mono text-[#64748B] mb-1">Isolated in</div>
+                <div className="text-2xl font-bold font-mono text-[#DC2626]">4.2 <span className="text-sm text-[#64748B]">avg splits</span></div>
+                <div className="text-[9px] font-mono text-[#64748B] mt-0.5">vs 15.8 avg for normal</div>
               </div>
               <div className="mt-3 w-full glass rounded-lg px-3 py-2 text-center">
-                <div className="text-[9px] font-mono text-[#F43F5E] font-bold">⚠ ACCOUNT ISOLATED</div>
-                <div className="text-[8px] font-mono text-[#475569] mt-0.5">SAR recommended</div>
+                <div className="text-[9px] font-mono text-[#DC2626] font-bold">⚠ ACCOUNT ISOLATED</div>
+                <div className="text-[8px] font-mono text-[#64748B] mt-0.5">SAR recommended</div>
               </div>
             </motion.div>
 
@@ -517,33 +511,33 @@ export default function IsolationForestSection() {
               whileInView={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.1 }}
               viewport={{ once: true }}
-              className="glass rounded-2xl p-5"
+              className="surface-card rounded-xl p-5"
             >
               <div className="flex items-center gap-2 mb-4">
-                <TrendingUp className="w-3 h-3 text-[#F97316]" />
-                <span className="text-[10px] font-mono text-[#F97316] tracking-wider">FEATURE CONTRIBUTIONS</span>
+                <TrendingUp className="w-3 h-3 text-[#EA580C]" />
+                <span className="text-[10px] font-mono text-[#EA580C] tracking-wider">FEATURE CONTRIBUTIONS</span>
               </div>
               <FeatureScoreBars />
             </motion.div>
-
-            {/* Live scoring feed */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-              viewport={{ once: true }}
-              className="glass rounded-2xl p-5"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <Activity className="w-3 h-3 text-[#00F5FF]" />
-                  <span className="text-[10px] font-mono text-[#00F5FF] tracking-wider">LIVE SCORING ENGINE</span>
-                </div>
-                <span className="text-[9px] font-mono text-[#475569]">300-tree ensemble</span>
-              </div>
-              <LiveScoringFeed />
-            </motion.div>
           </div>
+
+          {/* Live scoring feed */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+            viewport={{ once: true }}
+            className="surface-card rounded-xl p-5 lg:col-span-3"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Activity className="w-3 h-3 text-[#1E40AF]" />
+                <span className="text-[10px] font-mono text-[#1E40AF] tracking-wider">LIVE SCORING ENGINE</span>
+              </div>
+              <span className="text-[9px] font-mono text-[#64748B]">300-tree ensemble</span>
+            </div>
+            <LiveScoringFeed />
+          </motion.div>
         </div>
 
         {/* Bottom callout */}
@@ -551,31 +545,31 @@ export default function IsolationForestSection() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="glass-cyber rounded-2xl p-6 flex flex-col md:flex-row items-center gap-6"
+          className="surface-card rounded-xl p-6 flex flex-col md:flex-row items-center gap-6"
         >
           <div className="flex-1">
-            <div className="text-sm font-mono text-[#A855F7] mb-2">ISOLATION FOREST ARCHITECTURE</div>
-            <p className="text-[#94A3B8] text-sm leading-relaxed">
+            <div className="text-sm font-mono text-[#4F46E5] mb-2">ISOLATION FOREST ARCHITECTURE</div>
+            <p className="text-[#64748B] text-sm leading-relaxed">
               Each of 300 trees randomly selects a feature and split value to recursively partition data.
-              Suspicious accounts with extreme <span className="text-[#F43F5E] font-mono">structuring_ratio</span>,
-              high <span className="text-[#F97316] font-mono">fan_out_ratio</span>, and anomalous
-              <span className="text-[#FACC15] font-mono"> night_ratio</span> are isolated in
+              Suspicious accounts with extreme <span className="text-[#DC2626] font-mono">structuring_ratio</span>,
+              high <span className="text-[#EA580C] font-mono">fan_out_ratio</span>, and anomalous
+              <span className="text-[#D97706] font-mono"> night_ratio</span> are isolated in
               far fewer splits — scoring near 1.0. Contamination threshold set at 5%.
             </p>
           </div>
           <div className="flex flex-col items-center gap-2 flex-shrink-0">
             <div className="text-4xl font-bold font-mono gradient-text">94.7%</div>
-            <div className="text-[10px] font-mono text-[#475569] text-center">DETECTION<br />ACCURACY</div>
+            <div className="text-[10px] font-mono text-[#64748B] text-center">DETECTION<br />ACCURACY</div>
           </div>
-          <div className="w-px h-16 neon-line-v hidden md:block" />
+          <div className="w-px h-16 bg-[#E2E8F0] hidden md:block" />
           <div className="flex flex-col items-center gap-2 flex-shrink-0">
-            <div className="text-4xl font-bold font-mono" style={{ color: "#F43F5E" }}>&lt;38%</div>
-            <div className="text-[10px] font-mono text-[#475569] text-center">FALSE<br />POSITIVE RATE</div>
+            <div className="text-4xl font-bold font-mono" style={{ color: "#DC2626" }}>&lt;38%</div>
+            <div className="text-[10px] font-mono text-[#64748B] text-center">FALSE<br />POSITIVE RATE</div>
           </div>
-          <div className="w-px h-16 neon-line-v hidden md:block" />
+          <div className="w-px h-16 bg-[#E2E8F0] hidden md:block" />
           <div className="flex flex-col items-center gap-2 flex-shrink-0">
-            <div className="text-4xl font-bold font-mono text-[#10B981]">&lt;50ms</div>
-            <div className="text-[10px] font-mono text-[#475569] text-center">SCORING<br />LATENCY</div>
+            <div className="text-4xl font-bold font-mono text-[#059669]">&lt;50ms</div>
+            <div className="text-[10px] font-mono text-[#64748B] text-center">SCORING<br />LATENCY</div>
           </div>
         </motion.div>
       </div>

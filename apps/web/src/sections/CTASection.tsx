@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useInView } from "framer-motion";
+import { motion } from "framer-motion";
 import { useRef, useEffect, useCallback } from "react";
 import { ArrowRight, Sparkles, Shield, Zap, GitBranch, Brain } from "lucide-react";
 import Link from "next/link";
@@ -60,7 +60,7 @@ function NeuralBackground() {
           ctx.moveTo(nodes[i].x, nodes[i].y);
           ctx.lineTo(nodes[j].x, nodes[j].y);
           ctx.strokeStyle = isActive
-            ? `rgba(0, 245, 255, ${alpha * 3})`
+            ? `rgba(30, 64, 175, ${alpha * 3})`
             : `rgba(79, 70, 229, ${alpha})`;
           ctx.lineWidth = isActive ? 0.8 : 0.4;
           ctx.stroke();
@@ -72,7 +72,7 @@ function NeuralBackground() {
             const py = nodes[i].y + (nodes[j].y - nodes[i].y) * progress;
             ctx.beginPath();
             ctx.arc(px, py, 1.2, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(0, 245, 255, ${alpha * 8})`;
+            ctx.fillStyle = `rgba(30, 64, 175, ${alpha * 8})`;
             ctx.fill();
           }
         }
@@ -86,16 +86,19 @@ function NeuralBackground() {
       ctx.beginPath();
       ctx.arc(node.x, node.y, r, 0, Math.PI * 2);
       ctx.fillStyle = node.active
-        ? `rgba(0, 245, 255, ${0.2 * pulse})`
+        ? `rgba(30, 64, 175, ${0.2 * pulse})`
         : `rgba(79, 70, 229, ${0.12 * pulse})`;
       ctx.fill();
     });
 
-    animRef.current = requestAnimationFrame(draw);
   }, []);
 
   useEffect(() => {
-    animRef.current = requestAnimationFrame(draw);
+    const animate = () => {
+      draw();
+      animRef.current = requestAnimationFrame(animate);
+    };
+    animRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animRef.current);
   }, [draw]);
 
@@ -104,7 +107,6 @@ function NeuralBackground() {
 
 export default function CTASection() {
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true });
 
   const comparisons = [
     { legacy: "95% False Positives", star: "<38% False Positives", icon: Shield },
@@ -114,17 +116,10 @@ export default function CTASection() {
   ];
 
   return (
-    <section id="cta" className="relative py-40 overflow-hidden" ref={ref}>
+    <section id="cta" className="section-shell" ref={ref}>
       {/* Layered backgrounds */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#020617] via-[#0F172A] to-[#020617]" />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#F8FAFC] via-[#FFFFFF] to-[#F8FAFC]" />
       <NeuralBackground />
-
-      {/* Glow orbs */}
-      <div className="absolute top-1/3 left-1/6 w-[500px] h-[500px] rounded-full ambient-orb-cyan opacity-20 pointer-events-none" />
-      <div className="absolute bottom-1/3 right-1/6 w-[400px] h-[400px] rounded-full ambient-orb-purple opacity-15 pointer-events-none" />
-
-      {/* Scanlines */}
-      <div className="absolute inset-0 scanline opacity-20 pointer-events-none" />
 
       <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
         <motion.div
@@ -134,28 +129,28 @@ export default function CTASection() {
           className="space-y-10"
         >
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 glass rounded-full px-5 py-2">
+          <div className="section-eyebrow px-5 py-2">
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
             >
-              <Sparkles className="w-3 h-3 text-[#00F5FF]" />
+              <Sparkles className="w-3 h-3 text-[#1E40AF]" />
             </motion.div>
-            <span className="text-xs font-mono text-[#00F5FF] tracking-[0.12em]">
+            <span style={{ color: "#1E40AF" }}>
               THE FUTURE OF FINANCIAL CRIME DETECTION
             </span>
           </div>
 
           {/* Headline */}
           <div>
-            <h2 className="text-5xl md:text-6xl lg:text-8xl font-bold leading-[0.9] tracking-tighter">
-              <span className="text-white block mb-2">Modern AML Requires</span>
+            <h2 className="section-title leading-[0.9]">
+              <span className="block mb-2">Modern AML Requires</span>
               <span className="gradient-text block">Graph Intelligence.</span>
             </h2>
           </div>
 
           {/* Subtext */}
-          <p className="text-lg md:text-xl text-[#94A3B8] max-w-2xl mx-auto leading-relaxed">
+          <p className="section-copy text-lg md:text-xl mx-auto">
             Stop drowning in false positives. Start seeing the connections that matter.
             STAR transforms financial crime detection from reactive compliance to proactive
             AI-native intelligence.
@@ -178,15 +173,15 @@ export default function CTASection() {
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.08 + 0.3 }}
                   viewport={{ once: true }}
-                  className="glass-card rounded-xl p-3 text-center"
-                  style={{ border: "1px solid rgba(0,245,255,0.06)" }}
+                  className="surface-card rounded-xl p-3 text-center"
+                  style={{ border: "1px solid rgba(226,232,240,0.8)" }}
                 >
-                  <Icon className="w-4 h-4 text-[#475569] mx-auto mb-2" />
-                  <div className="text-[8px] font-mono text-[#475569] line-through mb-1">
+                  <Icon className="w-4 h-4 text-[#64748B] mx-auto mb-2" />
+                  <div className="text-[8px] font-mono text-[#94A3B8] line-through mb-1">
                     {comp.legacy}
                   </div>
-                  <ArrowRight className="w-2.5 h-2.5 text-[#00F5FF] mx-auto mb-1" />
-                  <div className="text-[9px] font-mono text-[#00F5FF] font-bold">
+                  <ArrowRight className="w-2.5 h-2.5 text-[#1E40AF] mx-auto mb-1" />
+                  <div className="text-[9px] font-mono text-[#1E40AF] font-bold">
                     {comp.star}
                   </div>
                 </motion.div>
@@ -204,10 +199,10 @@ export default function CTASection() {
           >
             <Link
               href="/dashboard"
-              className="group relative inline-flex items-center gap-3 px-10 py-5 rounded-2xl font-bold text-base overflow-hidden transition-all duration-300"
+              className="group relative inline-flex items-center gap-3 px-10 py-5 rounded-xl font-bold text-base overflow-hidden transition-all duration-300 surface-card"
               style={{
-                background: "linear-gradient(135deg, #00F5FF, #3B82F6, #A855F7)",
-                color: "#020617",
+                background: "linear-gradient(135deg, #1E40AF, #2563EB, #4F46E5)",
+                color: "#FFFFFF",
               }}
             >
               <motion.div
@@ -222,24 +217,24 @@ export default function CTASection() {
             </Link>
             <a
               href="#intelligence"
-              className="group inline-flex items-center gap-3 px-10 py-5 rounded-2xl font-semibold text-base transition-all duration-300"
+              className="group inline-flex items-center gap-3 px-10 py-5 rounded-xl font-semibold text-base transition-all duration-300 surface-card"
               style={{
-                background: "rgba(255,255,255,0.03)",
-                border: "1px solid rgba(255,255,255,0.08)",
-                color: "#E2E8F0",
+                background: "rgba(248,250,252,0.9)",
+                border: "1px solid rgba(226,232,240,0.8)",
+                color: "#0F172A",
                 backdropFilter: "blur(20px)",
               }}
               onMouseEnter={e => {
-                (e.currentTarget as HTMLElement).style.borderColor = "rgba(0,245,255,0.25)";
-                (e.currentTarget as HTMLElement).style.background = "rgba(0,245,255,0.04)";
+                (e.currentTarget as HTMLElement).style.borderColor = "rgba(30,64,175,0.25)";
+                (e.currentTarget as HTMLElement).style.background = "rgba(30,64,175,0.04)";
               }}
               onMouseLeave={e => {
-                (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.08)";
-                (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.03)";
+                (e.currentTarget as HTMLElement).style.borderColor = "rgba(226,232,240,0.8)";
+                (e.currentTarget as HTMLElement).style.background = "rgba(248,250,252,0.9)";
               }}
             >
               Explore Platform
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform text-[#00F5FF]" />
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform text-[#1E40AF]" />
             </a>
           </motion.div>
 
@@ -252,8 +247,8 @@ export default function CTASection() {
             className="flex flex-wrap justify-center gap-6 pt-4"
           >
             {["SOC 2 Type II", "GDPR Compliant", "BSA/AML Ready", "ISO 27001"].map((badge) => (
-              <div key={badge} className="flex items-center gap-2 text-[10px] font-mono text-[#475569]">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#10B981]" style={{ boxShadow: "0 0 4px rgba(16,185,129,0.6)" }} />
+              <div key={badge} className="flex items-center gap-2 text-[10px] font-mono text-[#64748B]">
+                <div className="w-1.5 h-1.5 rounded-full bg-[#059669]" style={{ boxShadow: "0 0 4px rgba(5,150,105,0.4)" }} />
                 {badge}
               </div>
             ))}

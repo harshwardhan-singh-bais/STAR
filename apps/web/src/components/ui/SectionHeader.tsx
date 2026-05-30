@@ -29,17 +29,17 @@ export function SectionHeader({
       viewport={{ once: true }}
       className={`mb-16 ${align === "center" ? "text-center" : "text-left"}`}
     >
-      <div className={`inline-flex items-center gap-2 glass rounded-full px-4 py-2 mb-6 ${align === "center" ? "mx-auto" : ""}`}>
+      <div className={`section-eyebrow mb-6 ${align === "center" ? "mx-auto" : ""}`}>
         {Icon && <Icon className="w-3 h-3" style={{ color: badgeColor }} />}
-        <span className="text-xs font-mono tracking-[0.12em]" style={{ color: badgeColor }}>
+        <span style={{ color: badgeColor }}>
           {badgeText}
         </span>
       </div>
-      <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
-        <span className="text-white">{title1} </span>
+      <h2 className="section-title mb-4">
+        <span>{title1} </span>
         <span className="gradient-text">{title2}</span>
       </h2>
-      <p className={`text-lg text-[#94A3B8] max-w-2xl leading-relaxed ${align === "center" ? "mx-auto" : ""}`}>
+      <p className={`section-copy ${align === "center" ? "mx-auto" : ""}`}>
         {description}
       </p>
     </motion.div>
