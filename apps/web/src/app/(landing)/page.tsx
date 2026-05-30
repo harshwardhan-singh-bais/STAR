@@ -10,10 +10,12 @@ import CommandCenterSection from "@/sections/CommandCenterSection";
 import PerformanceSection from "@/sections/PerformanceSection";
 import CTASection from "@/sections/CTASection";
 import Footer from "@/sections/Footer";
+import { LandingScrollReset } from "@/components/LandingScrollReset";
 
 export default function Home() {
   return (
     <main className="relative">
+      <LandingScrollReset />
       <Navbar />
       <HeroSection />
       <IntelligenceSection />

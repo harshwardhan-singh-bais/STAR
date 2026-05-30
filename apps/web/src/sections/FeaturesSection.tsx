@@ -29,31 +29,28 @@ const iconMap: Record<string, React.ElementType> = {
 
 export default function FeaturesSection() {
   return (
-    <section id="features" className="relative py-32 overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-b from-[#020617] via-[#030712] to-[#020617]" />
-      <div className="absolute inset-0 grid-pattern opacity-15" />
-
-      {/* Ambient */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full ambient-orb-blue opacity-10 pointer-events-none" />
+    <section id="features" className="section-shell">
+      <div className="absolute inset-0 bg-gradient-to-b from-[#F8FAFC] via-[#FFFFFF] to-[#F8FAFC]" />
+      <div className="absolute inset-0 grid-pattern opacity-20" />
 
       <div className="relative z-10 max-w-7xl mx-auto px-6">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-16"
+          className="text-center mb-12"
         >
-          <div className="inline-flex items-center gap-2 glass rounded-full px-4 py-2 mb-6">
-            <Zap className="w-3 h-3 text-[#FACC15]" />
-            <span className="text-xs font-mono text-[#FACC15] tracking-[0.12em]">
+          <div className="section-eyebrow mb-6">
+            <Zap className="w-3 h-3 text-[#D97706]" />
+            <span style={{ color: "#D97706" }}>
               CAPABILITIES
             </span>
           </div>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
-            <span className="text-white">Every Tool for </span>
+          <h2 className="section-title mb-4">
+            <span>Every Tool for </span>
             <span className="gradient-text">Modern AML</span>
           </h2>
-          <p className="text-lg text-[#94A3B8] max-w-2xl mx-auto leading-relaxed">
+          <p className="section-copy mx-auto">
             A comprehensive suite of graph-native intelligence tools. From real-time streaming
             detection to AI-powered investigation — everything you need to stop financial crime.
           </p>
@@ -61,7 +58,7 @@ export default function FeaturesSection() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {FEATURES.map((feature, i) => {
-            const Icon = (iconMap[feature.icon] || Zap) as any;
+            const Icon = iconMap[feature.icon] || Zap;
             return (
               <motion.div
                 key={feature.title}
@@ -72,14 +69,13 @@ export default function FeaturesSection() {
                 className="h-full"
               >
                 <TiltCard
-                  className="group relative rounded-2xl p-6 cursor-pointer transition-all duration-300 h-full overflow-hidden"
-                  glowColor={`${feature.color}12`}
+                  className="group relative rounded-xl p-6 cursor-pointer transition-all duration-300 h-full overflow-hidden surface-card"
                 >
                   {/* Base bg */}
                   <div
-                    className="absolute inset-0 rounded-2xl"
+                    className="absolute inset-0 rounded-xl"
                     style={{
-                      background: "rgba(13,20,36,0.75)",
+                      background: "rgba(255,255,255,0.7)",
                       border: `1px solid ${feature.color}12`,
                       backdropFilter: "blur(20px)",
                     }}
@@ -89,7 +85,7 @@ export default function FeaturesSection() {
                   <div
                     className="absolute top-0 left-0 right-0 h-[1px] opacity-0 group-hover:opacity-100 transition-all duration-500"
                     style={{
-                      background: `linear-gradient(90deg, transparent, ${feature.color}80, transparent)`,
+                      background: `linear-gradient(90deg, transparent, ${feature.color}60, transparent)`,
                     }}
                   />
 
@@ -97,7 +93,7 @@ export default function FeaturesSection() {
                   <div
                     className="absolute top-0 right-0 w-16 h-16 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
                     style={{
-                      background: `radial-gradient(circle at 100% 0%, ${feature.color}15, transparent 70%)`,
+                      background: `radial-gradient(circle at 100% 0%, ${feature.color}10, transparent 70%)`,
                     }}
                   />
 
@@ -115,18 +111,18 @@ export default function FeaturesSection() {
                       />
                     </div>
 
-                    <h3 className="text-base font-semibold text-white mb-2 group-hover:text-[#E2E8F0] transition-colors">
+                    <h3 className="text-base font-semibold text-[#0F172A] mb-2 group-hover:text-[#1E40AF] transition-colors">
                       {feature.title}
                     </h3>
 
-                    <p className="text-sm text-[#475569] leading-relaxed group-hover:text-[#94A3B8] transition-colors">
+                    <p className="text-sm text-[#475569] leading-relaxed group-hover:text-[#0F172A] transition-colors">
                       {feature.description}
                     </p>
 
                     {/* Bottom accent */}
                     <div
                       className="absolute bottom-0 left-0 right-0 h-0.5 scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"
-                      style={{ background: `linear-gradient(90deg, ${feature.color}60, transparent)` }}
+                      style={{ background: `linear-gradient(90deg, ${feature.color}40, transparent)` }}
                     />
                   </div>
                 </TiltCard>

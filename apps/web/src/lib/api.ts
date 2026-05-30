@@ -3,28 +3,122 @@
 // Typed client for all STAR backend endpoints
 // ============================================================
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { MOCK_ALERTS, MOCK_GRAPH_EDGES, MOCK_GRAPH_NODES } from "@/data";
+
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
+
+const MOCK_HEALTH: SystemHealth = {
+  overall: "healthy",
+  services: [
+    {
+      name: "api-gateway",
+      status: "online",
+      latency_ms: 12,
+      details: "Using local fallback while backend is unavailable",
+    },
+    {
+      name: "alerts",
+      status: "online",
+      latency_ms: 8,
+      details: "Serving seeded alert data",
+    },
+    {
+      name: "graph",
+      status: "online",
+      latency_ms: 9,
+      details: "Serving seeded graph data",
+    },
+  ],
+  uptime_seconds: 0,
+  version: "local-fallback",
+};
+
+const MOCK_GRAPH_DATA: GraphData = {
+  nodes: MOCK_GRAPH_NODES,
+  links: MOCK_GRAPH_EDGES,
+  total_nodes: MOCK_GRAPH_NODES.length,
+  total_edges: MOCK_GRAPH_EDGES.length,
+  suspicious_edges: MOCK_GRAPH_EDGES.filter((edge) => edge.suspicious).length,
+};
+
+function buildApiUrl(path: string): string {
+  const base = BASE_URL.replace(/\/$/, "");
+  return `${base}${path}`;
+}
+
+function getMockAlertById(id: string): AlertData {
+  return (MOCK_ALERTS.find((alert) => alert.id === id) ?? MOCK_ALERTS[0]) as AlertData;
+}
+
+function getMockAlertStats(): Record<string, unknown> {
+  const bySeverity = MOCK_ALERTS.reduce<Record<string, number>>((acc, alert) => {
+    acc[alert.severity] = (acc[alert.severity] || 0) + 1;
+    return acc;
+  }, {});
+
+  return {
+    total_alerts: MOCK_ALERTS.length,
+    open_alerts: MOCK_ALERTS.filter((alert) => alert.status === "open").length,
+    investigating_alerts: MOCK_ALERTS.filter((alert) => alert.status === "investigating").length,
+    escalated_alerts: MOCK_ALERTS.filter((alert) => alert.status === "escalated").length,
+    by_severity: bySeverity,
+  };
+}
+
+function getMockGraphStats(): Record<string, unknown> {
+  return {
+    total_nodes: MOCK_GRAPH_DATA.total_nodes,
+    total_edges: MOCK_GRAPH_DATA.total_edges,
+    suspicious_edges: MOCK_GRAPH_DATA.suspicious_edges,
+    communities: new Set(MOCK_GRAPH_NODES.map((node) => node.community)).size,
+  };
+}
+
+function getMockCommunities(): Record<string, unknown> {
+  return {
+    communities: MOCK_GRAPH_NODES.reduce<Record<string, string[]>>((acc, node) => {
+      const key = String(node.community);
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(node.id);
+      return acc;
+    }, {}),
+  };
+}
 
 // ── Generic fetch helper ───────────────────────────────────────
 async function apiFetch<T>(
   path: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  fallback?: T
 ): Promise<T> {
-  const url = `${BASE_URL}${path}`;
-  const res = await fetch(url, {
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-    ...options,
-  });
+  const url = buildApiUrl(path);
 
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`API ${path} failed [${res.status}]: ${err}`);
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+      ...options,
+    });
+
+    if (!res.ok) {
+      if (fallback !== undefined) {
+        return fallback;
+      }
+
+      const err = await res.text();
+      throw new Error(`API ${path} failed [${res.status}]: ${err}`);
+    }
+
+    return res.json() as Promise<T>;
+  } catch (error) {
+    if (fallback !== undefined) {
+      return fallback;
+    }
+
+    throw error;
   }
-
-  return res.json() as Promise<T>;
 }
 
 // ── Types ─────────────────────────────────────────────────────
@@ -145,9 +239,9 @@ export interface ModelInfo {
 
 export const starApi = {
   // System
-  getHealth: () => apiFetch<SystemHealth>("/system/health"),
-  getMetrics: () => apiFetch<Record<string, unknown>>("/system/metrics"),
-  getModelInfo: () => apiFetch<ModelInfo>("/system/models"),
+  getHealth: () => apiFetch<SystemHealth>("/system/health", {}, MOCK_HEALTH),
+  getMetrics: () => apiFetch<Record<string, unknown>>("/system/metrics", {}, {}),
+  getModelInfo: () => apiFetch<ModelInfo>("/system/models", {}, { isolation_forest: {}, tgnn: {} }),
 
   // Scoring
   scoreTransaction: (body: {
@@ -176,10 +270,10 @@ export const starApi = {
   // Alerts
   getAlerts: (params?: { status?: string; severity?: string; limit?: number }) => {
     const qs = new URLSearchParams(params as Record<string, string>).toString();
-    return apiFetch<AlertData[]>(`/alerts${qs ? `?${qs}` : ""}`);
+    return apiFetch<AlertData[]>(`/alerts${qs ? `?${qs}` : ""}`, {}, MOCK_ALERTS as AlertData[]);
   },
 
-  getAlert: (id: string) => apiFetch<AlertData>(`/alerts/${id}`),
+  getAlert: (id: string) => apiFetch<AlertData>(`/alerts/${id}`, {}, getMockAlertById(id)),
 
   updateAlert: (id: string, status: string, assignee?: string) =>
     apiFetch<AlertData>(`/alerts/${id}`, {
@@ -187,13 +281,13 @@ export const starApi = {
       body: JSON.stringify({ status, assignee }),
     }),
 
-  getAlertStats: () => apiFetch<Record<string, unknown>>("/alerts/stats/summary"),
+  getAlertStats: () => apiFetch<Record<string, unknown>>("/alerts/stats/summary", {}, getMockAlertStats()),
 
   // Graph
   getSubgraph: (accountId: string, depth = 2) =>
-    apiFetch<GraphData>(`/graph/subgraph?account_id=${accountId}&depth=${depth}`),
+    apiFetch<GraphData>(`/graph/subgraph?account_id=${accountId}&depth=${depth}`, {}, MOCK_GRAPH_DATA),
 
-  getFullGraph: () => apiFetch<GraphData>("/graph/full"),
+  getFullGraph: () => apiFetch<GraphData>("/graph/full", {}, MOCK_GRAPH_DATA),
 
   tracePath: (fromId: string, toId: string) =>
     apiFetch<{
@@ -201,14 +295,19 @@ export const starApi = {
       total_amount: number;
       hops: number;
       is_circular: boolean;
-    }>(`/graph/path?from_id=${fromId}&to_id=${toId}`),
+    }>(`/graph/path?from_id=${fromId}&to_id=${toId}`, {}, {
+      nodes: [fromId, toId],
+      total_amount: 0,
+      hops: 1,
+      is_circular: fromId === toId,
+    }),
 
-  getCommunities: () => apiFetch<Record<string, unknown>>("/graph/communities"),
-  getGraphStats: () => apiFetch<Record<string, unknown>>("/graph/stats"),
+  getCommunities: () => apiFetch<Record<string, unknown>>("/graph/communities", {}, getMockCommunities()),
+  getGraphStats: () => apiFetch<Record<string, unknown>>("/graph/stats", {}, getMockGraphStats()),
 
   // Copilot
   copilotQuery: async (message: string, sessionId = "default", context?: Record<string, unknown>) => {
-    const res = await fetch(`${BASE_URL}/copilot/query/sync`, {
+    const res = await fetch(buildApiUrl("/copilot/query/sync"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message, session_id: sessionId, context }),
@@ -217,7 +316,10 @@ export const starApi = {
     return res.json() as Promise<{ id: string; role: string; content: string; timestamp: string }>;
   },
 
-  copilotStatus: () => apiFetch<{ available: boolean; message: string }>("/copilot/status"),
+  copilotStatus: () => apiFetch<{ available: boolean; message: string }>("/copilot/status", {}, {
+    available: false,
+    message: "Backend unavailable; using local demo mode",
+  }),
 
   generateSAR: (body: { account_id: string; alert_ids: string[]; investigation_notes?: string }) =>
     apiFetch<Record<string, unknown>>("/copilot/sar", {

@@ -21,14 +21,14 @@ export default function AlertsPage() {
     <div className="p-6 lg:p-10 max-w-[1600px] mx-auto min-h-[calc(100vh-64px)]">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
+          <h1 className="text-3xl font-bold text-[#0F172A] mb-2 flex items-center gap-3">
             <ShieldAlert className="w-8 h-8 text-[#F43F5E]" />
             Alert Center
           </h1>
-          <p className="text-[#94A3B8]">Manage and prioritize active AML investigations.</p>
+          <p className="text-[#475569]">Manage and prioritize active AML investigations.</p>
         </div>
         <div className="flex gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-sm text-[#E2E8F0]">
+          <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] hover:bg-[#F1F5F9] transition-colors text-sm text-[#0F172A]">
             <Filter className="w-4 h-4" /> Filter
           </button>
           <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#F43F5E]/10 border border-[#F43F5E]/30 text-[#F43F5E] hover:bg-[#F43F5E]/20 transition-colors text-sm font-bold">
@@ -37,12 +37,12 @@ export default function AlertsPage() {
         </div>
       </div>
 
-      <GlassCard className="overflow-hidden border border-white/5">
+      <GlassCard className="surface-card overflow-hidden border border-[#E2E8F0]">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-[#0F172A]/80 border-b border-white/10 text-[10px] font-mono text-[#94A3B8] uppercase tracking-wider">
-                <th className="p-4 font-medium flex items-center gap-1 cursor-pointer hover:text-white">ID <ArrowUpDown className="w-3 h-3"/></th>
+              <tr className="bg-[#F8FAFC] border-b border-[#E2E8F0] text-[10px] font-mono text-[#475569] uppercase tracking-wider">
+                <th className="p-4 font-medium flex items-center gap-1 cursor-pointer hover:text-[#0F172A]">ID <ArrowUpDown className="w-3 h-3"/></th>
                 <th className="p-4 font-medium">Type</th>
                 <th className="p-4 font-medium">Severity</th>
                 <th className="p-4 font-medium">Status</th>
@@ -56,10 +56,10 @@ export default function AlertsPage() {
                 <motion.tr 
                   variants={STAGGER_ITEM_UP}
                   key={alert.id} 
-                  className="border-b border-white/5 hover:bg-white/5 transition-colors group cursor-pointer"
+                  className="border-b border-[#E2E8F0] hover:bg-[#F8FAFC] transition-colors group cursor-pointer"
                 >
-                  <td className="p-4 text-xs font-mono text-white">{alert.id}</td>
-                  <td className="p-4 text-sm text-[#E2E8F0]">{alert.type.replace(/_/g, ' ')}</td>
+                    <td className="p-4 text-xs font-mono text-[#0F172A]">{alert.id}</td>
+                    <td className="p-4 text-sm text-[#475569]">{alert.type.replace(/_/g, ' ')}</td>
                   <td className="p-4">
                     <RiskBadge level={alert.severity} />
                   </td>
@@ -72,14 +72,14 @@ export default function AlertsPage() {
                       {alert.status.toUpperCase()}
                     </span>
                   </td>
-                  <td className="p-4 text-right font-mono font-bold text-white">
+                  <td className="p-4 text-right font-mono font-bold text-[#0F172A]">
                     {alert.amount}
                   </td>
-                  <td className="p-4 text-right text-xs font-mono text-[#94A3B8]">
+                  <td className="p-4 text-right text-xs font-mono text-[#475569]">
                     {alert.time}
                   </td>
                   <td className="p-4 text-right">
-                    <button className="p-1.5 text-[#475569] hover:text-white transition-colors opacity-0 group-hover:opacity-100">
+                    <button className="p-1.5 text-[#475569] hover:text-[#0F172A] transition-colors opacity-0 group-hover:opacity-100">
                       <MoreHorizontal className="w-5 h-5" />
                     </button>
                   </td>

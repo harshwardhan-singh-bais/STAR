@@ -8,7 +8,6 @@ import {
   AlertTriangle,
   Activity,
   Shield,
-  TrendingUp,
   Eye,
 } from "lucide-react";
 import AnimatedGraphBackground from "@/components/AnimatedGraphBackground";
@@ -24,11 +23,11 @@ const NetworkGlobe3D = dynamic(() => import("@/components/NetworkGlobe3D"), {
 // ─── Live Alert Ticker ─────────────────────────────────────────────────────────
 function AlertTicker() {
   const alerts = [
-    { text: "CIRCULAR TXN — 4 nodes · $487K · 72h window · CRITICAL", color: "#F43F5E", severity: "CRITICAL" },
-    { text: "STRUCTURING ALERT — 6× $9.5K deposits · ACC-7833 · HIGH", color: "#F97316", severity: "HIGH" },
-    { text: "MULE NETWORK — 8 accounts · community cluster #3 · CRITICAL", color: "#F43F5E", severity: "CRITICAL" },
-    { text: "DORMANT REACTIVATION — ACC-4521 · 11mo inactive · $234K · HIGH", color: "#F97316", severity: "HIGH" },
-    { text: "GNN SCORE 0.91 — GraphSAGE flagged ACC-9877 · SAR RECOMMENDED", color: "#A855F7", severity: "ML-FLAG" },
+    { text: "CIRCULAR TXN — 4 nodes · $487K · 72h window · CRITICAL", color: "#DC2626", severity: "CRITICAL" },
+    { text: "STRUCTURING ALERT — 6× $9.5K deposits · ACC-7833 · HIGH", color: "#EA580C", severity: "HIGH" },
+    { text: "MULE NETWORK — 8 accounts · community cluster #3 · CRITICAL", color: "#DC2626", severity: "CRITICAL" },
+    { text: "DORMANT REACTIVATION — ACC-4521 · 11mo inactive · $234K · HIGH", color: "#EA580C", severity: "HIGH" },
+    { text: "GNN SCORE 0.91 — GraphSAGE flagged ACC-9877 · SAR RECOMMENDED", color: "#4F46E5", severity: "ML-FLAG" },
   ];
   const [current, setCurrent] = useState(0);
 
@@ -44,20 +43,20 @@ function AlertTicker() {
       transition={{ delay: 0.3, duration: 0.6 }}
       className="inline-flex items-center gap-3 rounded-full px-4 py-1.5 mb-8"
       style={{
-        background: "rgba(13, 20, 36, 0.9)",
-        border: "1px solid rgba(255,255,255,0.08)",
+        background: "rgba(255, 255, 255, 0.95)",
+        border: "1px solid rgba(226, 232, 240, 0.8)",
         backdropFilter: "blur(20px)",
       }}
     >
       {/* Live dot */}
       <span className="relative flex h-2 w-2 flex-shrink-0">
-        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10B981] opacity-75" />
-        <span className="relative inline-flex rounded-full h-2 w-2 bg-[#10B981]" />
+        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#059669] opacity-75" />
+        <span className="relative inline-flex rounded-full h-2 w-2 bg-[#059669]" />
       </span>
-      <span className="text-[10px] font-bold tracking-[0.12em] font-mono text-[#10B981]">
+      <span className="text-[10px] font-bold tracking-[0.12em] font-mono text-[#059669]">
         LIVE INTEL
       </span>
-      <div className="w-px h-3 bg-white/10" />
+      <div className="w-px h-3 bg-[#E2E8F0]" />
       <AnimatePresence mode="wait">
         <motion.span
           key={current}
@@ -116,23 +115,20 @@ function FloatingCard({
   delay,
   children,
   className,
-  glowColor = "rgba(0,245,255,0.1)",
 }: {
   delay: number;
   children: React.ReactNode;
   className?: string;
-  glowColor?: string;
 }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 30, scale: 0.9 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ delay, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-      className={`glass-card rounded-2xl p-4 ${className}`}
+      className={`glass-card rounded-xl p-4 ${className}`}
       style={{
-        animation: `float ${7 + delay}s ease-in-out infinite ${delay}s`,
-        boxShadow: `0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)`,
-        borderColor: "rgba(255,255,255,0.06)",
+        boxShadow: `0 2px 8px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.5)`,
+        borderColor: "rgba(226,232,240,0.8)",
       }}
     >
       {children}
@@ -152,19 +148,19 @@ function RadarSweep() {
             cx="50" cy="50"
             r={r * 15}
             fill="none"
-            stroke="rgba(0,245,255,0.15)"
+            stroke="rgba(30,64,175,0.15)"
             strokeWidth="0.5"
           />
         ))}
         {/* Cross hairs */}
-        <line x1="50" y1="5" x2="50" y2="95" stroke="rgba(0,245,255,0.1)" strokeWidth="0.5" />
-        <line x1="5" y1="50" x2="95" y2="50" stroke="rgba(0,245,255,0.1)" strokeWidth="0.5" />
+        <line x1="50" y1="5" x2="50" y2="95" stroke="rgba(30,64,175,0.1)" strokeWidth="0.5" />
+        <line x1="5" y1="50" x2="95" y2="50" stroke="rgba(30,64,175,0.1)" strokeWidth="0.5" />
         {/* Sweep */}
         <g style={{ transformOrigin: "50px 50px", animation: "radar-sweep 4s linear infinite" }}>
           <defs>
             <radialGradient id="radarGrad" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#00F5FF" stopOpacity="0" />
-              <stop offset="100%" stopColor="#00F5FF" stopOpacity="0.3" />
+              <stop offset="0%" stopColor="#1E40AF" stopOpacity="0" />
+              <stop offset="100%" stopColor="#1E40AF" stopOpacity="0.3" />
             </radialGradient>
           </defs>
           <path
@@ -173,16 +169,16 @@ function RadarSweep() {
           />
           <line
             x1="50" y1="50" x2="50" y2="5"
-            stroke="#00F5FF"
+            stroke="#1E40AF"
             strokeWidth="1"
             opacity="0.6"
           />
         </g>
         {/* Blips */}
-        <circle cx="68" cy="28" r="2" fill="#F43F5E" opacity="0.8">
+        <circle cx="68" cy="28" r="2" fill="#DC2626" opacity="0.8">
           <animate attributeName="opacity" values="0.8;0.2;0.8" dur="2s" repeatCount="indefinite" />
         </circle>
-        <circle cx="35" cy="62" r="1.5" fill="#F97316" opacity="0.6">
+        <circle cx="35" cy="62" r="1.5" fill="#EA580C" opacity="0.6">
           <animate attributeName="opacity" values="0.6;0.1;0.6" dur="2.5s" repeatCount="indefinite" />
         </circle>
       </svg>
@@ -197,20 +193,12 @@ export default function HeroSection() {
       {/* Animated graph background */}
       <AnimatedGraphBackground />
 
-      {/* Deep gradient overlays */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#020617]/95 via-[#020617]/40 to-[#020617]/95 z-[1]" />
-      <div className="absolute inset-0 bg-gradient-to-r from-[#020617]/80 via-transparent to-[#020617]/80 z-[1]" />
+      {/* Light gradient overlays */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#F8FAFC]/95 via-[#FFFFFF]/40 to-[#F8FAFC]/95 z-[1]" />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#F8FAFC]/80 via-transparent to-[#F8FAFC]/80 z-[1]" />
 
       {/* Fine grid overlay */}
-      <div className="absolute inset-0 grid-pattern z-[1] opacity-25" />
-
-      {/* Scanlines for cyberpunk feel */}
-      <div className="absolute inset-0 scanline z-[1] opacity-30 pointer-events-none" />
-
-      {/* Large ambient glow orbs */}
-      <div className="absolute top-1/3 left-1/4 w-[600px] h-[600px] rounded-full ambient-orb-purple opacity-25 z-[1] pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/3 w-[500px] h-[500px] rounded-full ambient-orb-cyan opacity-15 z-[1] pointer-events-none" />
-      <div className="absolute top-2/3 left-1/2 w-[400px] h-[400px] rounded-full ambient-orb-blue opacity-20 z-[1] pointer-events-none" />
+      <div className="absolute inset-0 grid-pattern z-[1] opacity-20" />
 
       {/* Main Content */}
       <div className="relative z-10 max-w-7xl mx-auto px-6 pt-28 pb-20 w-full">
@@ -229,11 +217,11 @@ export default function HeroSection() {
               transition={{ delay: 0.5 }}
               className="flex items-center gap-2 mb-6"
             >
-              <span className="text-[10px] font-mono tracking-[0.2em] text-[#475569] uppercase">
+              <span className="text-[10px] font-mono tracking-[0.2em] text-[#64748B] uppercase">
                 Spatial Temporal Automated Risk System
               </span>
-              <div className="flex-1 h-px bg-gradient-to-r from-[#00F5FF]/20 to-transparent" />
-              <span className="text-[10px] font-mono text-[#475569]">v2.1</span>
+              <div className="flex-1 h-px bg-gradient-to-r from-[#1E40AF]/20 to-transparent" />
+              <span className="text-[10px] font-mono text-[#64748B]">v2.1</span>
             </motion.div>
 
             {/* Main headline */}
@@ -243,15 +231,11 @@ export default function HeroSection() {
               transition={{ delay: 0.4, duration: 1, ease: [0.22, 1, 0.36, 1] }}
               className="mb-6"
             >
-              <h1 className="font-bold leading-[0.92] tracking-tighter text-white">
+              <h1 className="font-bold leading-[0.92] tracking-tighter text-[#0F172A]">
                 <span className="block text-6xl md:text-7xl lg:text-8xl xl:text-9xl">
                   Follow
                 </span>
-                <span className="block text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-light italic text-transparent"
-                  style={{
-                    WebkitTextStroke: "1px rgba(255,255,255,0.3)",
-                  }}
-                >
+                <span className="block text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-light italic gradient-text-subtle">
                   the Money.
                 </span>
               </h1>
@@ -262,7 +246,7 @@ export default function HeroSection() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.65, duration: 0.8 }}
-              className="text-base md:text-lg text-[#94A3B8] max-w-xl mb-10 leading-relaxed"
+              className="text-base md:text-lg text-[#475569] max-w-xl mb-10 leading-relaxed"
             >
               AI-native graph intelligence for modern AML. Isolation Forest anomaly detection,
               GNN-powered investigation, and multi-hop laundering tracing — all in real-time.
@@ -365,39 +349,36 @@ export default function HeroSection() {
             <FloatingCard
               delay={0.9}
               className="absolute top-0 right-0 w-64"
-              glowColor="rgba(244,63,94,0.1)"
             >
               <div className="flex items-center justify-between mb-3">
-                <span className="text-[10px] font-mono text-[#475569] tracking-wider">RISK ANALYSIS · ACC-4521</span>
-                <AlertTriangle className="w-3.5 h-3.5 text-[#F43F5E] animate-pulse" />
+                <span className="text-[10px] font-mono text-[#64748B] tracking-wider">RISK ANALYSIS · ACC-4521</span>
+                <AlertTriangle className="w-3.5 h-3.5 text-[#DC2626] animate-pulse" />
               </div>
               <div className="flex items-end gap-2 mb-3">
-                <span className="text-5xl font-bold font-mono text-[#F43F5E] text-glow-cyan"
-                  style={{ textShadow: "0 0 20px rgba(244,63,94,0.5)" }}>87</span>
-                <span className="text-sm text-[#475569] mb-2">/100</span>
-                <span className="ml-auto text-[9px] font-mono bg-[#F43F5E]/10 text-[#F43F5E] px-2 py-1 rounded font-bold">CRITICAL</span>
+                <span className="text-5xl font-bold font-mono text-[#DC2626]">87</span>
+                <span className="text-sm text-[#64748B] mb-2">/100</span>
+                <span className="ml-auto text-[9px] font-mono bg-[#DC2626]/10 text-[#DC2626] px-2 py-1 rounded font-bold">CRITICAL</span>
               </div>
-              <div className="w-full h-1.5 rounded-full bg-white/[0.04] mb-3">
+              <div className="w-full h-1.5 rounded-full bg-[#E2E8F0] mb-3">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: "87%" }}
                   transition={{ delay: 1.5, duration: 1.5, ease: "easeOut" }}
                   className="h-full rounded-full"
                   style={{
-                    background: "linear-gradient(90deg, #F97316, #F43F5E)",
-                    boxShadow: "0 0 8px rgba(244,63,94,0.4)",
+                    background: "linear-gradient(90deg, #EA580C, #DC2626)",
                   }}
                 />
               </div>
               <div className="grid grid-cols-4 gap-1.5 text-[9px] font-mono">
                 {[
-                  { label: "Rules", val: "30%", color: "#F97316" },
-                  { label: "Graph", val: "25%", color: "#3B82F6" },
-                  { label: "ML", val: "25%", color: "#A855F7" },
-                  { label: "GNN", val: "20%", color: "#14B8A6" },
+                  { label: "Rules", val: "30%", color: "#EA580C" },
+                  { label: "Graph", val: "25%", color: "#1E40AF" },
+                  { label: "ML", val: "25%", color: "#4F46E5" },
+                  { label: "GNN", val: "20%", color: "#0D9488" },
                 ].map(m => (
                   <div key={m.label} className="text-center">
-                    <div className="text-[#475569]">{m.label}</div>
+                    <div className="text-[#64748B]">{m.label}</div>
                     <div className="font-bold" style={{ color: m.color }}>{m.val}</div>
                   </div>
                 ))}
@@ -407,8 +388,8 @@ export default function HeroSection() {
             {/* ── Live Transaction Flow ─── */}
             <FloatingCard delay={1.3} className="absolute top-52 left-0 w-60">
               <div className="flex items-center gap-2 mb-3">
-                <Activity className="w-3 h-3 text-[#00F5FF]" />
-                <span className="text-[10px] font-mono text-[#00F5FF] tracking-wider">CIRCULAR PATTERN</span>
+                <Activity className="w-3 h-3 text-[#1E40AF]" />
+                <span className="text-[10px] font-mono text-[#1E40AF] tracking-wider">CIRCULAR PATTERN</span>
               </div>
               <div className="space-y-2">
                 {[
@@ -424,8 +405,8 @@ export default function HeroSection() {
                     transition={{ delay: 1.8 + i * 0.2 }}
                     className="flex items-center justify-between text-[10px] font-mono"
                   >
-                    <span className="text-[#94A3B8]">{flow.from} → {flow.to}</span>
-                    <span className="text-[#F43F5E] font-bold">{flow.amount}</span>
+                    <span className="text-[#64748B]">{flow.from} → {flow.to}</span>
+                    <span className="text-[#DC2626] font-bold">{flow.amount}</span>
                   </motion.div>
                 ))}
               </div>
@@ -433,7 +414,7 @@ export default function HeroSection() {
                 animate={{ opacity: [0.6, 1, 0.6] }}
                 transition={{ duration: 2, repeat: Infinity }}
                 className="mt-3 px-2 py-1.5 rounded-lg text-center text-[9px] font-mono font-bold"
-                style={{ background: "rgba(244,63,94,0.1)", color: "#F43F5E", border: "1px solid rgba(244,63,94,0.2)" }}
+                style={{ background: "rgba(220,38,38,0.1)", color: "#DC2626", border: "1px solid rgba(220,38,38,0.2)" }}
               >
                 ⚠ CIRCULAR LAUNDERING DETECTED
               </motion.div>
@@ -441,53 +422,52 @@ export default function HeroSection() {
 
             {/* ── GNN Score Card ─── */}
             <FloatingCard delay={1.1} className="absolute bottom-16 right-8 w-52">
-              <div className="text-[10px] font-mono text-[#475569] mb-3">GRAPHSAGE OUTPUT</div>
+              <div className="text-[10px] font-mono text-[#64748B] mb-3">GRAPHSAGE OUTPUT</div>
               <div className="flex items-center gap-3">
                 <div className="relative w-14 h-14">
                   <svg className="w-14 h-14 -rotate-90">
-                    <circle cx="28" cy="28" r="22" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="4" />
+                    <circle cx="28" cy="28" r="22" fill="none" stroke="rgba(226,232,240,0.8)" strokeWidth="4" />
                     <motion.circle
                       cx="28" cy="28" r="22"
                       fill="none"
-                      stroke="#A855F7"
+                      stroke="#4F46E5"
                       strokeWidth="4"
                       strokeLinecap="round"
                       initial={{ strokeDasharray: "0 138.2" }}
                       animate={{ strokeDasharray: `${0.91 * 138.2} 138.2` }}
                       transition={{ delay: 2, duration: 1.5 }}
-                      style={{ filter: "drop-shadow(0 0 6px rgba(168,85,247,0.6))" }}
                     />
                   </svg>
-                  <span className="absolute inset-0 flex items-center justify-center text-sm font-bold font-mono text-[#A855F7]">
+                  <span className="absolute inset-0 flex items-center justify-center text-sm font-bold font-mono text-[#4F46E5]">
                     .91
                   </span>
                 </div>
                 <div>
-                  <div className="text-sm font-semibold text-[#F43F5E]">Suspicious</div>
-                  <div className="text-[10px] text-[#475569]">P(fraud) = 0.91</div>
-                  <div className="text-[9px] text-[#A855F7] mt-0.5">300-tree ensemble</div>
+                  <div className="text-sm font-semibold text-[#DC2626]">Suspicious</div>
+                  <div className="text-[10px] text-[#64748B]">P(fraud) = 0.91</div>
+                  <div className="text-[9px] text-[#4F46E5] mt-0.5">300-tree ensemble</div>
                 </div>
               </div>
             </FloatingCard>
 
             {/* ── Isolation Forest score card ─── */}
             <FloatingCard delay={1.5} className="absolute bottom-2 left-4 w-44">
-              <div className="text-[10px] font-mono text-[#A855F7] mb-2">ISOLATION SCORE</div>
+              <div className="text-[10px] font-mono text-[#4F46E5] mb-2">ISOLATION SCORE</div>
               <div className="flex items-center gap-2">
-                <div className="text-3xl font-bold font-mono text-[#F43F5E]">0.94</div>
+                <div className="text-3xl font-bold font-mono text-[#DC2626]">0.94</div>
                 <div className="flex-1">
-                  <div className="text-[9px] font-mono text-[#475569]">Isolated in</div>
-                  <div className="text-[10px] font-mono text-[#F43F5E]">4.2 splits</div>
-                  <div className="text-[8px] font-mono text-[#475569]">vs 15.8 normal</div>
+                  <div className="text-[9px] font-mono text-[#64748B]">Isolated in</div>
+                  <div className="text-[10px] font-mono text-[#DC2626]">4.2 splits</div>
+                  <div className="text-[8px] font-mono text-[#64748B]">vs 15.8 normal</div>
                 </div>
               </div>
-              <div className="mt-2 h-1 rounded-full bg-white/[0.04] overflow-hidden">
+              <div className="mt-2 h-1 rounded-full bg-[#E2E8F0] overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: "94%" }}
                   transition={{ delay: 2.5, duration: 1 }}
                   className="h-full rounded-full"
-                  style={{ background: "linear-gradient(90deg, #F97316, #F43F5E)", boxShadow: "0 0 6px rgba(244,63,94,0.5)" }}
+                  style={{ background: "linear-gradient(90deg, #EA580C, #DC2626)" }}
                 />
               </div>
             </FloatingCard>
@@ -501,12 +481,12 @@ export default function HeroSection() {
           transition={{ delay: 2, duration: 1 }}
           className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
         >
-          <span className="text-[9px] font-mono text-[#475569] tracking-[0.2em]">SCROLL TO EXPLORE</span>
+          <span className="text-[9px] font-mono text-[#64748B] tracking-[0.2em]">SCROLL TO EXPLORE</span>
           <motion.div
             animate={{ y: [0, 8, 0] }}
             transition={{ duration: 2, repeat: Infinity }}
           >
-            <ChevronDown className="w-4 h-4 text-[#00F5FF]/50" />
+            <ChevronDown className="w-4 h-4 text-[#1E40AF]/50" />
           </motion.div>
         </motion.div>
       </div>

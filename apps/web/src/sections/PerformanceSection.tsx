@@ -61,25 +61,25 @@ function AnimatedMetric({
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.6 }}
       viewport={{ once: true }}
-      className="glass rounded-2xl p-6 text-center group hover:glow-cyan transition-all duration-500"
+      className="glass rounded-xl p-6 text-center group transition-all duration-500"
     >
-      <div className="text-4xl md:text-5xl font-bold font-mono text-white mb-2">
-        <span className="text-[#94A3B8] text-2xl">{prefix}</span>
+      <div className="text-4xl md:text-5xl font-bold font-mono text-[#0F172A] mb-2">
+        <span className="text-[#64748B] text-2xl">{prefix}</span>
         <span className="gradient-text">{display}</span>
-        <span className="text-[#94A3B8] text-lg ml-1">{suffix}</span>
+        <span className="text-[#64748B] text-lg ml-1">{suffix}</span>
       </div>
-      <div className="text-xs font-mono text-[#94A3B8] uppercase tracking-wider">
+      <div className="text-xs font-mono text-[#64748B] uppercase tracking-wider">
         {label}
       </div>
 
       {/* Progress bar */}
-      <div className="mt-4 w-full h-1 rounded-full bg-white/5">
+      <div className="mt-4 w-full h-1 rounded-full bg-[#E2E8F0]">
         <motion.div
           initial={{ width: 0 }}
           whileInView={{ width: `${Math.min((value / 3000) * 100, 100)}%` }}
           transition={{ delay: delay + 0.5, duration: 1.5, ease: "easeOut" }}
           viewport={{ once: true }}
-          className="h-full rounded-full bg-gradient-to-r from-[#00F5FF] to-[#3B82F6]"
+          className="h-full rounded-full bg-gradient-to-r from-[#1E40AF] to-[#2563EB]"
         />
       </div>
     </motion.div>
@@ -88,27 +88,27 @@ function AnimatedMetric({
 
 export default function PerformanceSection() {
   return (
-    <section className="relative py-32 overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-b from-[#020617] via-[#030712] to-[#020617]" />
+    <section className="section-shell">
+      <div className="absolute inset-0 bg-gradient-to-b from-[#F8FAFC] via-[#FFFFFF] to-[#F8FAFC]" />
 
       <div className="relative z-10 max-w-7xl mx-auto px-6">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-16"
+          className="text-center mb-12"
         >
-          <div className="inline-flex items-center gap-2 glass rounded-full px-4 py-2 mb-6">
-            <Gauge className="w-3 h-3 text-[#06D6A0]" />
-            <span className="text-xs font-mono text-[#06D6A0] tracking-wider">
+          <div className="section-eyebrow mb-6">
+            <Gauge className="w-3 h-3 text-[#059669]" />
+            <span style={{ color: "#059669" }}>
               PERFORMANCE
             </span>
           </div>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
-            <span className="text-white">Built for </span>
+          <h2 className="section-title mb-4">
+            <span>Built for </span>
             <span className="gradient-text">Speed</span>
           </h2>
-          <p className="text-lg text-[#94A3B8] max-w-2xl mx-auto">
+          <p className="section-copy mx-auto">
             Sub-second detection at scale. Every metric engineered for
             production-grade financial intelligence.
           </p>
