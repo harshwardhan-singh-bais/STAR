@@ -124,6 +124,116 @@ export default function TGNNDashboard() {
     cycle_path?: string[]; cycle_edges?: string[];
     relatedNodes?: string[]; relatedEdges?: string[];
   } | null>(null);
+  const [isReviewing, setIsReviewing] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
+  const [isPaused, setIsPaused] = useState(false);
+  const isPausedRef = useRef(false);
+  const messageQueueRef = useRef<any[]>([]);
+  const wsRef = useRef<WebSocket | null>(null);
+
+  const fullGraphRef = useRef<GraphData>({ nodes: [], links: [] });
+
+  const fetchGraph = useCallback(() =>
+    fetch(`${API}/api/graph`)
+      .then(r => r.json())
+      .then(data => {
+        fullGraphRef.current = data;
+        setGraphData({ nodes: data.nodes, links: [] });
+        setIsLoaded(true);
+      })
+      .catch(() => { /* silent catch for offline backend */ }),
+    []
+  );
+
+  const fetchCases = useCallback(() =>
+    fetch(`${API}/api/cases`)
+      .then(r => r.json())
+      .then(data => setCases(data))
+      .catch(() => { /* silent catch for offline backend */ }),
+    []
+  );
+
+  // Helper to process a message
+  const processMessage = useCallback((msg: any) => {
+    if (msg.type === "inference_start") {
+      setProgress({ processed: 0, total: msg.data.total });
+    } else if (msg.type === "alert" || msg.type === "transaction") {
+      const d = msg.data;
+      const isAlert = msg.type === "alert";
+      const row: TxRow = {
+        tx_id: d.tx_id, sender: d.sender, receiver: d.receiver,
+        amount: d.amount || 0, tx_type: d.tx_type || "Normal",
+        risk_score: d.risk_score || 0, currency: d.currency || "USD",
+        payment_format: d.payment_format || "Wire", timestamp: d.timestamp || 0,
+        status: isAlert ? "SUSPICIOUS" : "NORMAL", case_id: d.case_id, isNew: true,
+        reasons: d.reasons || [], is_fraud_gt: d.is_fraud_gt
+      };
+
+      if (isAlert && d.is_fraud_gt) { setMetrics(m => ({ ...m, caught: m.caught + 1 })); }
+      if (!isAlert && d.is_fraud_gt) { setMetrics(m => ({ ...m, missed: m.missed + 1 })); }
+      if (isAlert && !d.is_fraud_gt) { setMetrics(m => ({ ...m, fp: m.fp + 1 })); }
+
+      if (isAlert) {
+        setAlertCount(p => p + 1);
+        if (!seenPatterns.current.has(d.tx_type) && d.tx_type !== "Normal") {
+          seenPatterns.current.add(d.tx_type);
+          setPatternCount(p => p + 1);
+        }
+      }
+      setProgress(p => ({ ...p, processed: p.processed + 1 }));
+      setTransactions(prev => {
+        const next = [...prev, row];
+        setTimeout(() => setTransactions(tx => tx.map(t => t.tx_id === row.tx_id ? { ...t, isNew: false } : t)), 500);
+        return next;
+      });
+      setGraphData(prev => {
+        const nodes = [...prev.nodes]; 
+        const links = [...prev.links];
+        
+        let senderNode = nodes.find(n => n.id === d.sender);
+        if (!senderNode) {
+          senderNode = { id: d.sender, status: "STABLE", risk_score: 0, is_fraud: false, in_loop: false, degree: 0 };
+          nodes.push(senderNode);
+        }
+        let receiverNode = nodes.find(n => n.id === d.receiver);
+        if (!receiverNode) {
+          receiverNode = { id: d.receiver, status: "STABLE", risk_score: 0, is_fraud: false, in_loop: false, degree: 0 };
+          nodes.push(receiverNode);
+        }
+        
+        senderNode.degree += 1;
+        receiverNode.degree += 1;
+
+        if (isAlert) {
+          senderNode.status = "SUSPICIOUS"; 
+          senderNode.is_fraud = true;
+        }
+        
+        if (!links.find(l => (l as any).tx_id === d.tx_id)) {
+          links.push({
+            source: d.sender,
+            target: d.receiver,
+            tx_id: d.tx_id,
+            amount: d.amount || 0,
+            type: d.tx_type || "Normal",
+            is_alert: isAlert,
+            risk_score: d.risk_score || 0,
+            in_loop: false,
+          });
+        }
+        return { nodes, links };
+      });
+    } else if (msg.type === "progress") {
+      setProgress(msg.data);
+    } else if (msg.type === "inference_complete") {
+      setIsRunning(false);
+      setIsPaused(false);
+      isPausedRef.current = false;
+      fetchCases();
+      setTimeout(() => graphRef.current?.zoomToFit(1000, 60), 1000);
+    }
+  }, [fetchCases, transactions, cases]);
 
   // Build pattern-aware focus highlight from a transaction row
   const buildFocusFromTx = useCallback((tx: TxRow, gd: GraphData) => {
@@ -153,7 +263,6 @@ export default function TGNNDashboard() {
   const [sortCol, setSortCol] = useState<string>("");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
-  const fullGraphRef = useRef<GraphData>({ nodes: [], links: [] });
   const graphRef = useRef<any>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 600, height: 400 });
@@ -181,21 +290,7 @@ export default function TGNNDashboard() {
     return () => obs.disconnect();
   }, []);
 
-  const fetchGraph = () =>
-    fetch(`${API}/api/graph`)
-      .then(r => r.json())
-      .then(data => {
-        fullGraphRef.current = data;
-        setGraphData({ nodes: data.nodes, links: [] });
-        setIsLoaded(true);
-      })
-      .catch(() => { /* silent catch for offline backend */ });
 
-  const fetchCases = () =>
-    fetch(`${API}/api/cases`)
-      .then(r => r.json())
-      .then(data => setCases(data))
-      .catch(() => { /* silent catch for offline backend */ });
 
   useEffect(() => {
     fetchGraph();
@@ -204,9 +299,9 @@ export default function TGNNDashboard() {
 
   useEffect(() => {
     if (graphRef.current && isLoaded) {
-      graphRef.current.d3Force("charge").strength(-80);
-      graphRef.current.d3Force("link").distance(40);
-      graphRef.current.d3Force("center").strength(0.2);
+      graphRef.current.d3Force("charge").strength(-25);
+      graphRef.current.d3Force("link").distance(25);
+      graphRef.current.d3Force("center").strength(1.2);
     }
   }, [isLoaded, graphData.nodes.length]);
 
@@ -220,6 +315,9 @@ export default function TGNNDashboard() {
   const runDemo = () => {
     if (isRunning) return;
     setIsRunning(true);
+    setIsPaused(false);
+    isPausedRef.current = false;
+    messageQueueRef.current = [];
     setTransactions([]); setCases([]); setSelectedTx(null);
     setAlertCount(0); setPatternCount(0); seenPatterns.current.clear();
     setMetrics({ caught: 0, missed: 0, fp: 0 });
@@ -228,108 +326,91 @@ export default function TGNNDashboard() {
     setTimeout(() => graphRef.current?.zoomToFit(400, 60), 100);
 
     const ws = new WebSocket(`${WS_URL}?threshold=${threshold}`);
+    wsRef.current = ws;
+
     ws.onmessage = (event) => {
       const msg = JSON.parse(event.data);
-      if (msg.type === "inference_start") {
-        setProgress({ processed: 0, total: msg.data.total });
-      } else if (msg.type === "alert" || msg.type === "transaction") {
-        const d = msg.data;
-        const isAlert = msg.type === "alert";
-        const row: TxRow = {
-          tx_id: d.tx_id, sender: d.sender, receiver: d.receiver,
-          amount: d.amount || 0, tx_type: d.tx_type || "Normal",
-          risk_score: d.risk_score || 0, currency: d.currency || "USD",
-          payment_format: d.payment_format || "Wire", timestamp: d.timestamp || 0,
-          status: isAlert ? "SUSPICIOUS" : "NORMAL", case_id: d.case_id, isNew: true,
-          reasons: d.reasons || [], is_fraud_gt: d.is_fraud_gt
-        };
-
-        if (isAlert && d.is_fraud_gt) { setMetrics(m => ({ ...m, caught: m.caught + 1 })); }
-        if (!isAlert && d.is_fraud_gt) { setMetrics(m => ({ ...m, missed: m.missed + 1 })); }
-        if (isAlert && !d.is_fraud_gt) { setMetrics(m => ({ ...m, fp: m.fp + 1 })); }
-
-        if (isAlert) {
-          setAlertCount(p => p + 1);
-          if (!seenPatterns.current.has(d.tx_type) && d.tx_type !== "Normal") {
-            seenPatterns.current.add(d.tx_type);
-            setPatternCount(p => p + 1);
-          }
-        }
-        setProgress(p => ({ ...p, processed: p.processed + 1 }));
-        setTransactions(prev => {
-          const next = [...prev, row];
-          setTimeout(() => setTransactions(tx => tx.map(t => t.tx_id === row.tx_id ? { ...t, isNew: false } : t)), 500);
-          return next;
-        });
-        setGraphData(prev => {
-          const nodes = [...prev.nodes]; 
-          const links = [...prev.links];
-          
-          let senderNode = nodes.find(n => n.id === d.sender);
-          if (!senderNode) {
-            senderNode = { id: d.sender, status: "STABLE", risk_score: 0, is_fraud: false, in_loop: false, degree: 0 };
-            nodes.push(senderNode);
-          }
-          let receiverNode = nodes.find(n => n.id === d.receiver);
-          if (!receiverNode) {
-            receiverNode = { id: d.receiver, status: "STABLE", risk_score: 0, is_fraud: false, in_loop: false, degree: 0 };
-            nodes.push(receiverNode);
-          }
-          
-          senderNode.degree += 1;
-          receiverNode.degree += 1;
-
-          if (isAlert) {
-            senderNode.status = "SUSPICIOUS"; 
-            senderNode.is_fraud = true;
-          }
-          
-          if (!links.find(l => (l as any).tx_id === d.tx_id)) {
-            links.push({
-              source: d.sender,
-              target: d.receiver,
-              tx_id: d.tx_id,
-              amount: d.amount || 0,
-              type: d.tx_type || "Normal",
-              is_alert: isAlert,
-              risk_score: d.risk_score || 0,
-              in_loop: false,
-            });
-          }
-          return { nodes, links };
-        });
-      } else if (msg.type === "progress") {
-        setProgress(msg.data);
-        if (graphRef.current && msg.data.processed > 0) {
-          graphRef.current.zoomToFit(600, 60);
-        }
-      } else if (msg.type === "inference_complete") {
-        setIsRunning(false);
-        fetchCases();
-        setTimeout(() => graphRef.current?.zoomToFit(1000, 60), 1000);
-      } else if (msg.type === "error") {
-        // silent catch for offline backend
+      if (isPausedRef.current) {
+        messageQueueRef.current.push(msg);
+      } else {
+        processMessage(msg);
+      }
+    };
+    ws.onclose = () => {
+      if (!isPausedRef.current) {
         setIsRunning(false);
       }
     };
-    ws.onclose = () => setIsRunning(false);
     ws.onerror = () => setIsRunning(false);
   };
 
+  const handleButtonClick = () => {
+    if (!isRunning) {
+      runDemo();
+    } else {
+      if (isPaused) {
+        setIsPaused(false);
+        isPausedRef.current = false;
+        
+        const drainQueue = () => {
+          if (isPausedRef.current || messageQueueRef.current.length === 0) return;
+          const msg = messageQueueRef.current.shift();
+          processMessage(msg);
+          setTimeout(drainQueue, 40);
+        };
+        drainQueue();
+      } else {
+        setIsPaused(true);
+        isPausedRef.current = true;
+      }
+    }
+  };
+
   const handleReview = async (caseId: string, decision: string) => {
-    await fetch(`${API}/api/cases/${caseId}/review`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ decision })
-    });
-    setSelectedTx(null);
-    fetchCases();
-    fetchGraph();
+    setIsReviewing(true);
+    const reviewedTx = transactions.find(t => t.case_id === caseId) || cases.find(c => c.case_id === caseId);
+    
+    try {
+      await fetch(`${API}/api/cases/${caseId}/review`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ decision })
+      });
+    } catch (e) {
+      console.warn("Backend review endpoint failed/offline, fallback to optimistic UI", e);
+    }
+
+    // Optimistic UI updates
     setTransactions(prev => prev.map(t =>
       t.case_id === caseId
         ? { ...t, status: decision === "APPROVED" ? "APPROVED" : decision === "REJECTED" ? "REJECTED" : "ESCALATED" }
         : t
     ));
+    setCases(prev => prev.filter(c => c.case_id !== caseId));
+
+    if (reviewedTx) {
+      setGraphData(prev => {
+        const nodes = prev.nodes.map(n => {
+          if (n.id === reviewedTx.sender || n.id === reviewedTx.receiver) {
+            let status = n.status;
+            if (decision === "APPROVED") status = "STABLE";
+            else if (decision === "REJECTED") status = "CRITICAL";
+            else if (decision === "ESCALATED") status = "SUSPICIOUS";
+            return { ...n, status, risk_score: decision === "APPROVED" ? 10 : 95 };
+          }
+          return n;
+        });
+        return { ...prev, nodes };
+      });
+
+      setToast(`Alert ${reviewedTx.tx_id} successfully reviewed: ${decision === "APPROVED" ? "False Positive (Resolved)" : decision === "REJECTED" ? "Confirmed Fraud" : "Escalated"}`);
+      setTimeout(() => setToast(null), 4000);
+    }
+
+    setSelectedTx(null);
+    setIsReviewing(false);
+    fetchCases();
+    fetchGraph();
   };
 
   const focusedCaseRef = useRef(focusedCase);
@@ -442,14 +523,27 @@ export default function TGNNDashboard() {
             />
           </div>
           <div className={`status-chip ${isRunning ? "running" : ""}`}>
-            {isRunning ? <><span className="status-dot-live" />LIVE</> : isDone ? "✓ Complete" : "● Idle"}
+            {isRunning ? (isPaused ? "● Paused" : <><span className="status-dot-live" />LIVE</>) : isDone ? "✓ Complete" : "● Idle"}
           </div>
           <button
-            className={`btn-start ${!isLoaded || isRunning ? "" : "ready"}`}
-            onClick={runDemo}
-            disabled={!isLoaded || isRunning}
+            className={`btn-start ${!isLoaded ? "" : isRunning ? (isPaused ? "ready" : "") : "ready"}`}
+            onClick={handleButtonClick}
+            disabled={!isLoaded}
+            style={isRunning ? {
+              background: isPaused ? "linear-gradient(135deg, #10B981, #34D399)" : "linear-gradient(135deg, #EF4444, #F87171)",
+              color: "#FFFFFF",
+              boxShadow: isPaused ? "0 4px 12px rgba(16, 185, 129, 0.2)" : "0 4px 12px rgba(239, 68, 68, 0.2)"
+            } : {}}
           >
-            {isRunning ? <><Activity size={13} />Running…</> : <><Play size={13} fill="currentColor" />Start Demo</>}
+            {isRunning ? (
+              isPaused ? (
+                <><Play size={13} fill="currentColor" />Resume Demo</>
+              ) : (
+                <><X size={13} />Stop Demo</>
+              )
+            ) : (
+              <><Play size={13} fill="currentColor" />Start Demo</>
+            )}
           </button>
         </div>
       </header>
@@ -491,11 +585,11 @@ export default function TGNNDashboard() {
         </div>
         <div className="stat-card" style={{ border: "1px dashed var(--color-primary)", background: "rgba(30,64,175,0.05)", minWidth: 200 }}>
           <div className="stat-body" style={{ flex: 1 }}>
-            <div className="stat-label" style={{ color: "var(--color-primary)" }}>Dev Tracker (Ground Truth)</div>
+            <div className="stat-label" style={{ color: "var(--color-primary)" }}>Tracker (Ground Truth)</div>
             <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6, fontSize: 11, fontWeight: 500 }}>
               <div><span style={{ color: "var(--color-text-muted)" }}>Caught:</span> <span style={{ color: "var(--color-risk-low)" }}>{metrics.caught}</span></div>
               <div><span style={{ color: "var(--color-text-muted)" }}>Missed:</span> <span style={{ color: "var(--color-risk-critical)" }}>{metrics.missed}</span></div>
-              <div><span style={{ color: "var(--color-text-muted)" }}>FP:</span> <span style={{ color: "var(--color-risk-high)" }}>{metrics.fp}</span></div>
+              <div><span style={{ color: "var(--color-text-muted)" }}>For Review:</span> <span style={{ color: "var(--color-risk-high)" }}>{metrics.fp}</span></div>
             </div>
           </div>
         </div>
@@ -504,7 +598,7 @@ export default function TGNNDashboard() {
       {/* Body — 60/40 layout */}
       <div className="main-content">
         {/* Left Panel */}
-        <div className="table-panel">
+        <div className="table-panel" style={{ position: "relative" }}>
           {activeTab === "dashboard" ? (
             <>
               <div className="table-toolbar">
@@ -564,6 +658,7 @@ export default function TGNNDashboard() {
                             key={t.tx_id}
                             className={`${t.status !== "NORMAL" ? "row-alert" : ""} ${t.isNew ? "row-new" : ""} ${isSelected ? "selected" : ""}`}
                             onClick={() => {
+                              setSelectedNode(null);
                               if (isSelected) { setSelectedTx(null); setFocusedCase(null); }
                               else {
                                 setSelectedTx(t.status !== "NORMAL" ? t : { ...t, case_id: undefined });
@@ -618,6 +713,7 @@ export default function TGNNDashboard() {
                           key={c.case_id}
                           className={isSelected ? "selected" : ""}
                           onClick={() => {
+                            setSelectedNode(null);
                             if (isSelected) { setFocusedCase(null); setSelectedTx(null); }
                             else {
                               const base = buildFocusFromTx(c, graphData);
@@ -641,10 +737,160 @@ export default function TGNNDashboard() {
               )}
             </div>
           )}
+
+          {/* Case Review Panel (Overlay over the table) */}
+          {selectedTx && (
+            <div 
+              className="case-review animate-slide-up"
+              style={{
+                position: "absolute",
+                bottom: "16px",
+                right: "16px",
+                width: "360px",
+                maxWidth: "calc(100% - 32px)",
+                background: "#FFFFFF",
+                border: "1px solid #CBD5E1",
+                borderRadius: "12px",
+                boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+                zIndex: 50,
+                display: "flex",
+                flexDirection: "column",
+                maxHeight: "80%",
+                overflowY: "auto",
+                borderTop: "4px solid #1E40AF"
+              }}
+            >
+              <div className="case-review-header" style={{ padding: "12px 16px" }}>
+                <div><div className="case-review-title" style={{ fontSize: "14px" }}>{selectedTx.tx_id}</div></div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span className="case-review-badge"><TypeBadge type={selectedTx.tx_type} /></span>
+                  <button className="close-btn" onClick={() => { setSelectedTx(null); setFocusedCase(null); graphRef.current?.zoomToFit(600, 60); }}>
+                    <X size={14} />
+                  </button>
+                </div>
+              </div>
+              <div className="case-details" style={{ padding: "12px 16px", gap: "10px 16px" }}>
+                <div className="detail-item"><div className="detail-label">Sender</div><div className="detail-value">{selectedTx.sender}</div></div>
+                <div className="detail-item"><div className="detail-label">Receiver</div><div className="detail-value">{selectedTx.receiver}</div></div>
+                <div className="detail-item"><div className="detail-label">Amount</div><div className="detail-value mono">{fmtAmount(selectedTx.amount)}</div></div>
+                <div className="detail-item"><div className="detail-label">Currency</div><div className="detail-value mono">{selectedTx.currency || "N/A"}</div></div>
+                <div className="detail-item"><div className="detail-label">Format</div><div className="detail-value">{selectedTx.payment_format || "N/A"}</div></div>
+                <div className="detail-item">
+                  <div className="detail-label">Timestamp</div>
+                  <div className="detail-value mono">{selectedTx.timestamp ? new Date(selectedTx.timestamp * 1000).toLocaleString() : "N/A"}</div>
+                </div>
+                <div className="detail-item"><div className="detail-label">TGNN Risk</div><div className="detail-value risk-highlight">{selectedTx.risk_score.toFixed(1)}%</div></div>
+                {selectedTx.reasons && selectedTx.reasons.length > 0 && (
+                  <div className="detail-item" style={{ flexDirection: "column", alignItems: "flex-start", marginTop: 8, gridColumn: "span 2" }}>
+                    <div className="detail-label" style={{ marginBottom: 4 }}>Detection Reasons</div>
+                    <ul style={{ margin: 0, paddingLeft: 16, fontSize: 11, color: "var(--color-text-muted)" }}>
+                      {selectedTx.reasons.map((r, i) => <li key={i} style={{ marginBottom: 2 }}>{r}</li>)}
+                    </ul>
+                  </div>
+                )}
+              </div>
+              {selectedTx.case_id && (
+                <div className="case-actions" style={{ padding: "12px 16px" }}>
+                  <button className="action-btn action-reject" disabled={isReviewing} onClick={() => handleReview(selectedTx.case_id!, "REJECTED")}>
+                    <XCircle size={12} />Confirm Fraud
+                  </button>
+                  <button className="action-btn action-approve" disabled={isReviewing} onClick={() => handleReview(selectedTx.case_id!, "APPROVED")}>
+                    <CheckCircle size={12} />False Positive
+                  </button>
+                  <button className="action-btn action-escalate" disabled={isReviewing} onClick={() => handleReview(selectedTx.case_id!, "ESCALATED")}>
+                    <AlertCircle size={12} />Escalate
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Selected Node Details Overlay */}
+          {selectedNode && (
+            <div 
+              className="case-review animate-slide-up"
+              style={{
+                position: "absolute",
+                bottom: "16px",
+                right: "16px",
+                width: "360px",
+                maxWidth: "calc(100% - 32px)",
+                background: "#FFFFFF",
+                border: "1px solid #CBD5E1",
+                borderRadius: "12px",
+                boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+                zIndex: 50,
+                display: "flex",
+                flexDirection: "column",
+                maxHeight: "80%",
+                overflowY: "auto",
+                borderTop: "4px solid #7C3AED"
+              }}
+            >
+              <div className="case-review-header" style={{ padding: "12px 16px" }}>
+                <div>
+                  <div className="case-review-title" style={{ fontSize: "14px" }}>Entity Details</div>
+                  <div style={{ fontSize: "11px", color: "#64748B", fontFamily: "var(--font-mono)" }}>{selectedNode.id}</div>
+                </div>
+                <button className="close-btn" onClick={() => setSelectedNode(null)}>
+                  <X size={14} />
+                </button>
+              </div>
+              <div className="case-details" style={{ padding: "12px 16px", gap: "10px 16px" }}>
+                <div className="detail-item">
+                  <div className="detail-label">Status</div>
+                  <div className="detail-value flex items-center gap-1.5 mt-0.5">
+                    <span 
+                      className="inline-block w-2.5 h-2.5 rounded-full" 
+                      style={{ 
+                        backgroundColor: selectedNode.status === "STABLE" ? "#16A34A" : selectedNode.status === "SUSPICIOUS" ? "#EA580C" : "#DC2626" 
+                      }} 
+                    />
+                    <span style={{ fontSize: "13px", fontWeight: 600 }}>
+                      {selectedNode.status === "STABLE" ? "Safe" : selectedNode.status === "SUSPICIOUS" ? "Suspicious" : "Critical (Anomaly)"}
+                    </span>
+                  </div>
+                </div>
+                <div className="detail-item">
+                  <div className="detail-label">Connections</div>
+                  <div className="detail-value">{selectedNode.degree || 0} edges</div>
+                </div>
+                <div className="detail-item" style={{ gridColumn: "span 2" }}>
+                  <div className="detail-label" style={{ marginBottom: 6 }}>
+                    Associated Transactions ({transactions.filter(t => t.sender === selectedNode.id || t.receiver === selectedNode.id).length})
+                  </div>
+                  <div style={{ maxHeight: "180px", overflowY: "auto", border: "1px solid #E2E8F0", borderRadius: "8px" }} className="scrollbar-hide">
+                    {transactions.filter(t => t.sender === selectedNode.id || t.receiver === selectedNode.id).length === 0 ? (
+                      <p style={{ padding: "12px", fontSize: "12px", color: "#94A3B8" }} className="text-center">No recorded transactions.</p>
+                    ) : (
+                      transactions.filter(t => t.sender === selectedNode.id || t.receiver === selectedNode.id).map(t => (
+                        <div key={t.tx_id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", borderBottom: "1px solid #F1F5F9", fontSize: "12px" }}>
+                          <div style={{ display: "flex", flexDirection: "column" }}>
+                            <span style={{ fontWeight: 600, color: "#1E40AF" }}>{t.tx_id}</span>
+                            <span style={{ fontSize: "10px", color: "#64748B" }}>
+                              {t.sender === selectedNode.id ? "Outgoing" : "Incoming"}
+                            </span>
+                          </div>
+                          <div style={{ textAlign: "right" }}>
+                            <div className="mono font-semibold" style={{ color: t.status !== "NORMAL" ? "#DC2626" : "#334155" }}>
+                              {fmtAmount(t.amount)}
+                            </div>
+                            <span style={{ fontSize: "9px", padding: "1px 4px", borderRadius: "4px", backgroundColor: t.status !== "NORMAL" ? "#FEF2F2" : "#F0FDF4", color: t.status !== "NORMAL" ? "#DC2626" : "#16A34A", border: t.status !== "NORMAL" ? "1px solid #FCA5A5" : "1px solid #86EFAC" }}>
+                              {t.status !== "NORMAL" ? t.tx_type : "Safe"}
+                            </span>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Right: Graph + Case Review */}
-        <div className="graph-panel">
+        <div className={`graph-panel ${isFullscreen ? "fullscreen" : ""}`} style={isFullscreen ? { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, width: "100vw", height: "100vh", background: "var(--color-bg-primary)" } : {}}>
           <div className="panel-header">
             <span className="panel-title">
               Transaction Graph
@@ -652,7 +898,7 @@ export default function TGNNDashboard() {
             </span>
             <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
               {focusedCase && (
-                <button className="panel-toggle" onClick={() => { setFocusedCase(null); setSelectedTx(null); graphRef.current?.zoomToFit(600, 60); }} style={{ fontSize: 10, padding: "2px 8px" }}>
+                <button className="panel-toggle" onClick={() => { setFocusedCase(null); setSelectedTx(null); setSelectedNode(null); graphRef.current?.zoomToFit(600, 60); }} style={{ fontSize: 10, padding: "2px 8px" }}>
                   Clear Focus
                 </button>
               )}
@@ -667,7 +913,6 @@ export default function TGNNDashboard() {
           <div
             ref={containerRef}
             className={`graph-container ${graphCollapsed ? "collapsed" : ""}`}
-            style={isFullscreen ? { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, background: "var(--color-bg-primary)", display: "flex" } : {}}
           >
             {isLoaded && !graphCollapsed && (
               <ForceGraph2D
@@ -678,6 +923,14 @@ export default function TGNNDashboard() {
                 backgroundColor="transparent"
                 nodeId="id"
                 nodeCanvasObject={nodeCanvasObject as any}
+                onNodeClick={(node: any) => {
+                  setSelectedTx(null);
+                  setSelectedNode(node);
+                  if (graphRef.current) {
+                    graphRef.current.centerAt(node.x, node.y, 600);
+                    graphRef.current.zoom(4, 600);
+                  }
+                }}
                 linkColor={(l: any) => {
                   const fc = focusedCase;
                   if (fc) {
@@ -724,61 +977,39 @@ export default function TGNNDashboard() {
                   }
                   return "#ef4444";
                 }}
-                d3VelocityDecay={0.8}
-                d3AlphaDecay={0.05}
+                d3VelocityDecay={0.3}
+                d3AlphaDecay={0.02}
               />
             )}
           </div>
 
-          {/* Case Review Panel */}
-          {selectedTx && (
-            <div className="case-review">
-              <div className="case-review-header">
-                <div><div className="case-review-title">{selectedTx.tx_id}</div></div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span className="case-review-badge"><TypeBadge type={selectedTx.tx_type} /></span>
-                  <button className="close-btn" onClick={() => { setSelectedTx(null); setFocusedCase(null); graphRef.current?.zoomToFit(600, 60); }}>
-                    <X size={14} />
-                  </button>
-                </div>
-              </div>
-              <div className="case-details">
-                <div className="detail-item"><div className="detail-label">Sender</div><div className="detail-value">{selectedTx.sender}</div></div>
-                <div className="detail-item"><div className="detail-label">Receiver</div><div className="detail-value">{selectedTx.receiver}</div></div>
-                <div className="detail-item"><div className="detail-label">Amount</div><div className="detail-value mono">{fmtAmount(selectedTx.amount)}</div></div>
-                <div className="detail-item"><div className="detail-label">Currency</div><div className="detail-value mono">{selectedTx.currency || "N/A"}</div></div>
-                <div className="detail-item"><div className="detail-label">Format</div><div className="detail-value">{selectedTx.payment_format || "N/A"}</div></div>
-                <div className="detail-item">
-                  <div className="detail-label">Timestamp</div>
-                  <div className="detail-value mono">{selectedTx.timestamp ? new Date(selectedTx.timestamp * 1000).toLocaleString() : "N/A"}</div>
-                </div>
-                <div className="detail-item"><div className="detail-label">TGNN Risk</div><div className="detail-value risk-highlight">{selectedTx.risk_score.toFixed(1)}%</div></div>
-                {selectedTx.reasons && selectedTx.reasons.length > 0 && (
-                  <div className="detail-item" style={{ flexDirection: "column", alignItems: "flex-start", marginTop: 12 }}>
-                    <div className="detail-label" style={{ marginBottom: 4 }}>Detection Reasons</div>
-                    <ul style={{ margin: 0, paddingLeft: 16, fontSize: 11, color: "var(--color-text-muted)" }}>
-                      {selectedTx.reasons.map((r, i) => <li key={i} style={{ marginBottom: 2 }}>{r}</li>)}
-                    </ul>
-                  </div>
-                )}
-              </div>
-              {selectedTx.case_id && (
-                <div className="case-actions">
-                  <button className="action-btn action-reject" onClick={() => handleReview(selectedTx.case_id!, "REJECTED")}>
-                    <XCircle size={12} />Confirm Fraud
-                  </button>
-                  <button className="action-btn action-approve" onClick={() => handleReview(selectedTx.case_id!, "APPROVED")}>
-                    <CheckCircle size={12} />False Positive
-                  </button>
-                  <button className="action-btn action-escalate" onClick={() => handleReview(selectedTx.case_id!, "ESCALATED")}>
-                    <AlertCircle size={12} />Escalate
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
         </div>
       </div>
+      {toast && (
+        <div 
+          style={{
+            position: "fixed",
+            bottom: "24px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: "#0F172A",
+            color: "#FFFFFF",
+            padding: "12px 24px",
+            borderRadius: "8px",
+            boxShadow: "0 10px 15px -3px rgba(0,0,0,0.3)",
+            zIndex: 10000,
+            fontSize: "13px",
+            fontWeight: 500,
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            animation: "tgnn-slide-up 0.15s ease-out"
+          }}
+        >
+          <CheckCircle className="w-4 h-4 text-[#10B981]" />
+          {toast}
+        </div>
+      )}
     </div>
   );
 }
