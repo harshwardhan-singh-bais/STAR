@@ -840,7 +840,7 @@ export default function TGNNDashboard() {
                 position: "absolute",
                 bottom: "16px",
                 right: "16px",
-                width: "360px",
+                width: "800px",
                 maxWidth: "calc(100% - 32px)",
                 background: "#FFFFFF",
                 border: "1px solid #CBD5E1",
@@ -863,7 +863,9 @@ export default function TGNNDashboard() {
                   <X size={14} />
                 </button>
               </div>
-              <div className="case-details" style={{ padding: "12px 16px", gap: "10px 16px" }}>
+              <div style={{ display: "flex", flexDirection: "row", padding: "12px 16px", gap: "16px" }}>
+                <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                  <div className="case-details" style={{ padding: 0, gap: "10px 16px" }}>
                 <div className="detail-item">
                   <div className="detail-label">Status</div>
                   <div className="detail-value flex items-center gap-1.5 mt-0.5">
@@ -912,6 +914,53 @@ export default function TGNNDashboard() {
                   </div>
                 </div>
               </div>
+              </div>
+              <div style={{ flex: 1, minHeight: "350px", border: "1px solid #E2E8F0", borderRadius: "8px", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+                <div style={{ padding: "8px 12px", background: "#F8FAFC", borderBottom: "1px solid #E2E8F0", fontSize: "12px", fontWeight: 600, color: "#475569" }}>
+                  Related Subgraph
+                </div>
+                <div style={{ flex: 1, background: "#FAFAFA", position: "relative" }}>
+                  {(() => {
+                    const nodeIds = new Set<string>();
+                    nodeIds.add(selectedNode.id);
+                    const relatedLinks = graphData.links.filter((l: any) => {
+                      const srcId = typeof l.source === 'object' ? l.source.id : l.source;
+                      const tgtId = typeof l.target === 'object' ? l.target.id : l.target;
+                      if (srcId === selectedNode.id || tgtId === selectedNode.id) {
+                        nodeIds.add(srcId);
+                        nodeIds.add(tgtId);
+                        return true;
+                      }
+                      return false;
+                    });
+                    const relatedNodes = graphData.nodes.filter((n: any) => nodeIds.has(n.id));
+                    const subGraph = { nodes: relatedNodes, links: relatedLinks };
+
+                    return (
+                      <ForceGraph2D
+                        graphData={subGraph}
+                        width={376}
+                        height={315}
+                        backgroundColor="transparent"
+                        nodeId="id"
+                        nodeCanvasObject={nodeCanvasObject as any}
+                        onNodeClick={(node: any) => {
+                          setSelectedNode(node);
+                        }}
+                        linkColor={(l: any) => l.is_alert ? "rgba(239,68,68,0.75)" : "rgba(100,116,139,0.35)"}
+                        linkWidth={(l: any) => l.is_alert ? 1.5 : 1.2}
+                        linkDirectionalParticles={(l: any) => l.is_alert ? 2 : 0}
+                        linkDirectionalParticleWidth={3}
+                        linkDirectionalParticleSpeed={0.006}
+                        linkDirectionalParticleColor={(l: any) => "#ef4444"}
+                        d3VelocityDecay={0.3}
+                        d3AlphaDecay={0.02}
+                      />
+                    );
+                  })()}
+                </div>
+              </div>
+            </div>
             </div>
           )}
         </div>
