@@ -12,7 +12,7 @@ export default function AppLayout({
       
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <TopNav />
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto relative">
           {children}
         </main>
       </div>

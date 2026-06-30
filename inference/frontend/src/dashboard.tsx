@@ -341,11 +341,11 @@ export default function App() {
         </div>
         <div className="stat-card" style={{ border: '1px dashed var(--color-primary)', background: 'rgba(30, 64, 175, 0.05)', minWidth: 200 }}>
           <div className="stat-body" style={{ flex: 1 }}>
-            <div className="stat-label" style={{ color: 'var(--color-primary)' }}>Dev Tracker (Ground Truth)</div>
+            <div className="stat-label" style={{ color: 'var(--color-primary)' }}>Tracker (Ground Truth)</div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 11, fontWeight: 500 }}>
               <div><span style={{ color: 'var(--color-text-muted)' }}>Caught:</span> <span style={{ color: 'var(--color-risk-low)' }}>{metrics.caught}</span></div>
               <div><span style={{ color: 'var(--color-text-muted)' }}>Missed:</span> <span style={{ color: 'var(--color-risk-critical)' }}>{metrics.missed}</span></div>
-              <div><span style={{ color: 'var(--color-text-muted)' }}>FP:</span> <span style={{ color: 'var(--color-risk-high)' }}>{metrics.fp}</span></div>
+              <div><span style={{ color: 'var(--color-text-muted)' }}>For Review:</span> <span style={{ color: 'var(--color-risk-high)' }}>{metrics.fp}</span></div>
             </div>
           </div>
         </div>

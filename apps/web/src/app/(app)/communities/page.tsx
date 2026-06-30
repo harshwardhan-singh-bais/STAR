@@ -19,6 +19,8 @@ export default function CommunitiesPage() {
   const [graphData, setGraphData] = useState<GraphData | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const fgRef = useRef<any>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
 
   useEffect(() => {
     starApi.getCommunities()
@@ -29,12 +31,19 @@ export default function CommunitiesPage() {
       .catch(() => { /* silent */ });
   }, []);
 
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const obs = new ResizeObserver((entries) => {
+      if (!entries || entries.length === 0) return;
+      const { width, height } = entries[0].contentRect;
+      setDimensions({ width: width || 800, height: height || 500 });
+    });
+    obs.observe(containerRef.current);
+    return () => obs.disconnect();
+  }, []);
+
   const handleNodeClick = useCallback(
     (node: any) => {
-      // Aim at node from outside it
-      const distance = 40;
-      const distRatio = 1 + distance / Math.hypot(node.x, node.y, node.z);
-
       if (fgRef.current) {
         fgRef.current.centerAt(node.x, node.y, 1000);
         fgRef.current.zoom(8, 2000);
@@ -46,8 +55,8 @@ export default function CommunitiesPage() {
   const numCommunities = graphData ? new Set(graphData.nodes.map(n => n.community)).size : 0;
 
   return (
-    <div className="p-6 max-w-[1600px] mx-auto flex flex-col" style={{ background: "#F4F6F9", minHeight: "100%" }}>
-      <div className="mb-5">
+    <div className="p-6 max-w-[1600px] mx-auto flex flex-col h-[calc(100vh-56px)]" style={{ background: "#F4F6F9" }}>
+      <div className="mb-5 shrink-0">
         <h1 className="page-title">Community Detection</h1>
         <p className="page-subtitle">
           Louvain Modularity structural clustering of the transaction network.
@@ -60,44 +69,46 @@ export default function CommunitiesPage() {
         <MetricCard label="Identified Syndicates" value={numCommunities} icon={Network} color="#A855F7" />
       </div>
 
-      <GlassCard className="flex-1 relative overflow-hidden flex flex-col p-0 border border-white/10 shadow-2xl">
+      <GlassCard className="flex-1 relative overflow-hidden flex flex-col p-0 border border-[#E2E8F0] shadow-sm rounded-2xl bg-white">
         {!isLoaded && (
-          <div className="absolute inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(248,250,252,0.9)" }}>
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/80">
             <div className="flex flex-col items-center gap-4">
-              <div className="w-8 h-8 border-4 rounded-full animate-spin" style={{ borderColor: "#E2E8F0", borderTopColor: "#1A56DB" }} />
-              <p style={{ color: "#1A56DB", fontSize: "13px", fontWeight: 500 }}>Running Louvain Modularity Algorithm...</p>
+              <div className="w-8 h-8 border-4 border-[#E2E8F0] border-t-[#1A56DB] rounded-full animate-spin" />
+              <p className="text-[#1A56DB] text-sm font-medium">Running Louvain Modularity Algorithm...</p>
             </div>
           </div>
         )}
 
-        <div className="absolute top-4 left-4 z-10 p-4 rounded-lg" style={{ background: "rgba(255,255,255,0.95)", border: "1px solid #E2E8F0", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
-          <h3 className="font-semibold mb-2" style={{ fontSize: "12px", color: "#0F172A" }}>Topology Key</h3>
+        <div className="absolute top-4 left-4 z-10 p-4 rounded-lg bg-white/95 border border-[#E2E8F0] shadow-sm">
+          <h3 className="font-semibold mb-2 text-[#0F172A]" style={{ fontSize: "12px" }}>Topology Key</h3>
           <div className="space-y-2 text-xs">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-[hsl(45,70%,50%)]" />
-              <span className="text-[#94A3B8]">Community Colors</span>
+              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: getCommunityColor(1) }} />
+              <span className="text-[#64748B]">Community Groups</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-0.5 bg-red-500" />
-              <span className="text-[#94A3B8]">Suspicious Edge</span>
+              <span className="text-[#64748B]">Suspicious Edge</span>
             </div>
           </div>
         </div>
 
-        <div className="flex-1 w-full h-full relative" style={{ cursor: 'crosshair' }}>
-          {graphData && (
+        <div ref={containerRef} className="flex-1 w-full h-full relative" style={{ cursor: 'crosshair' }}>
+          {graphData && isLoaded && (
             <ForceGraph2D
               ref={fgRef}
               graphData={graphData}
+              width={dimensions.width}
+              height={dimensions.height}
               nodeLabel={(n: any) => `Node: ${n.id}\nCommunity: ${n.community}\nRisk: ${n.risk}`}
               nodeColor={(n: any) => getCommunityColor(n.community)}
-              nodeRelSize={4}
-              linkColor={(l: any) => l.suspicious ? 'rgba(239, 68, 68, 0.8)' : 'rgba(255, 255, 255, 0.1)'}
-              linkWidth={(l: any) => l.suspicious ? 2 : 1}
+              nodeRelSize={5}
+              linkColor={(l: any) => l.suspicious ? 'rgba(239, 68, 68, 0.95)' : 'rgba(100, 116, 139, 0.15)'}
+              linkWidth={(l: any) => l.suspicious ? 2.5 : 1}
               onNodeClick={handleNodeClick}
-              backgroundColor="#020617"
-              d3AlphaDecay={0.01}
-              d3VelocityDecay={0.08}
+              backgroundColor="#0F172A"
+              d3AlphaDecay={0.02}
+              d3VelocityDecay={0.15}
               cooldownTicks={100}
             />
           )}

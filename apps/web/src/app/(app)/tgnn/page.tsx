@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 export default function TGNNPage() {
   return (
-    <div style={{ height: "calc(100vh - 64px)", overflow: "hidden" }}>
+    <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}>
       <TGNNDashboard />
     </div>
   );

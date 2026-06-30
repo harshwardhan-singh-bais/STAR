@@ -149,14 +149,6 @@ export function AICopilot() {
             <Send className="w-4 h-4" />
           </button>
         </form>
-        <div className="mt-3 flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-          <button onClick={() => setInput("Show suspicious paths involving account ACC-4521")} className="whitespace-nowrap px-3 py-1.5 rounded bg-[#F8FAFC] border border-[#E2E8F0] text-[10px] text-[#64748B] font-mono hover:bg-[#F1F5F9] hover:text-[#0F172A] transition-colors">
-            "Show suspicious paths for ACC-4521"
-          </button>
-          <button onClick={() => setInput("Generate SAR for entity X")} className="whitespace-nowrap px-3 py-1.5 rounded bg-[#F8FAFC] border border-[#E2E8F0] text-[10px] text-[#64748B] font-mono hover:bg-[#F1F5F9] hover:text-[#0F172A] transition-colors">
-            "Generate SAR draft"
-          </button>
-        </div>
       </div>
     </div>
   );
