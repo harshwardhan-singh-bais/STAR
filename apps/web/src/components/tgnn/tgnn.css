@@ -140,7 +140,7 @@
 /* ── TABLE PANEL ── */
 .tgnn-root .table-panel {
   flex: 0 0 60%; display: flex; flex-direction: column;
-  border-right: 1px solid var(--color-border-light); min-width: 0;
+  min-width: 0;
   background: #F8FAFC;
 }
 .tgnn-root .table-toolbar {
@@ -287,6 +287,58 @@
 /* ── CASES EMPTY STATE ── */
 .tgnn-root .empty-cases { padding: 80px 32px; text-align: center; color: var(--color-text-muted); }
 .tgnn-root .empty-cases p { margin-top: 12px; font-size: 14px; }
+
+/* ── PANEL SPLITTER ── */
+.tgnn-root .panel-splitter {
+  flex: 0 0 14px;
+  cursor: col-resize;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: var(--color-border-light);
+  transition: background 0.15s;
+  z-index: 20;
+  user-select: none;
+  touch-action: none;
+}
+.tgnn-root .panel-splitter:hover,
+.tgnn-root .panel-splitter:active {
+  background: rgba(59, 130, 246, 0.15);
+}
+.tgnn-root .splitter-handle {
+  width: 2px;
+  height: 32px;
+  border-radius: 2px;
+  background: var(--color-border-medium);
+  transition: background 0.15s, height 0.15s;
+  flex-shrink: 0;
+}
+.tgnn-root .panel-splitter:hover .splitter-handle,
+.tgnn-root .panel-splitter:active .splitter-handle {
+  background: var(--color-primary-light);
+  height: 44px;
+}
+.tgnn-root .splitter-btn {
+  width: 14px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  border-radius: 3px;
+  padding: 0;
+  transition: color 0.15s, background 0.15s;
+  flex-shrink: 0;
+}
+.tgnn-root .splitter-btn:hover {
+  color: var(--color-primary);
+  background: rgba(59, 130, 246, 0.15);
+}
 
 /* ── ANIMATIONS ── */
 @keyframes tgnn-row-in   { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }

@@ -9,7 +9,7 @@ import dynamic from "next/dynamic";
 import {
   Play, Shield, Activity, RefreshCw, Layers, BarChart3,
   TrendingUp, CheckCircle, XCircle, AlertCircle,
-  ChevronDown, ChevronUp, Search, X, Maximize2, Minimize2
+  ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Search, X, Maximize2, Minimize2
 } from "lucide-react";
 import "./tgnn.css";
 
@@ -262,6 +262,33 @@ export default function TGNNDashboard() {
 
   const [sortCol, setSortCol] = useState<string>("");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+
+  // ── Splitter state ────────────────────────────────────────────────────────
+  const [splitPct, setSplitPct] = useState(60); // table panel width %
+  const mainContentRef = useRef<HTMLDivElement>(null);
+
+  const onSplitterPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+
+    const onMove = (ev: PointerEvent) => {
+      if (!mainContentRef.current) return;
+      const rect = mainContentRef.current.getBoundingClientRect();
+      const pct = ((ev.clientX - rect.left) / rect.width) * 100;
+      setSplitPct(Math.min(95, Math.max(5, pct)));
+    };
+
+    const onUp = () => {
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  };
 
   const graphRef = useRef<any>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -595,10 +622,10 @@ export default function TGNNDashboard() {
         </div>
       </div>
 
-      {/* Body — 60/40 layout */}
-      <div className="main-content">
+      {/* Body — resizable split layout */}
+      <div className="main-content" ref={mainContentRef}>
         {/* Left Panel */}
-        <div className="table-panel" style={{ position: "relative" }}>
+        <div className="table-panel" style={{ position: "relative", flex: `0 0 ${splitPct}%` }}>
           {activeTab === "dashboard" ? (
             <>
               <div className="table-toolbar">
@@ -889,8 +916,38 @@ export default function TGNNDashboard() {
           )}
         </div>
 
+        {/* Draggable Splitter */}
+        <div
+          className="panel-splitter"
+          onPointerDown={onSplitterPointerDown}
+          onDoubleClick={() => setSplitPct(60)}
+          title="Drag to resize · Double-click to reset"
+        >
+          {/* Collapse table → show graph */}
+          <button
+            className="splitter-btn"
+            title="Maximise graph"
+            onPointerDown={e => e.stopPropagation()}
+            onClick={e => { e.stopPropagation(); setSplitPct(5); }}
+          >
+            <ChevronLeft size={10} />
+          </button>
+
+          <div className="splitter-handle" />
+
+          {/* Collapse graph → show table */}
+          <button
+            className="splitter-btn"
+            title="Maximise table"
+            onPointerDown={e => e.stopPropagation()}
+            onClick={e => { e.stopPropagation(); setSplitPct(95); }}
+          >
+            <ChevronRight size={10} />
+          </button>
+        </div>
+
         {/* Right: Graph + Case Review */}
-        <div className={`graph-panel ${isFullscreen ? "fullscreen" : ""}`} style={isFullscreen ? { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, width: "100vw", height: "100vh", background: "var(--color-bg-primary)" } : {}}>
+        <div className={`graph-panel ${isFullscreen ? "fullscreen" : ""}`} style={isFullscreen ? { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, width: "100vw", height: "100vh", background: "var(--color-bg-primary)" } : { flex: `0 0 ${100 - splitPct}%` }}>
           <div className="panel-header">
             <span className="panel-title">
               Transaction Graph
