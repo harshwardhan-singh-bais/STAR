@@ -71,7 +71,38 @@ main_code = '''
 
 # Configuration
 class Args:
-    pass
+    pass## Error Type
+Build Error
+
+## Error Message
+Expected a semicolon
+
+## Build Output
+./src/store/useInvestigationStore.ts:170:17
+Expected a semicolon
+  168 | ...       content: `I have ge...
+  169 | ...       timestamp: new Date...
+> 170 | ...       const { starApi } =...
+      |                 ^
+  171 | ...
+  172 | ...       // 2. Extract any a...
+  173 | ...       const entityIds = e...
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./src/store/useInvestigationStore.ts [Client Component Browser]
+    ./src/app/(app)/copilot/page.tsx [Client Component Browser]
+    ./src/app/(app)/copilot/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/store/useInvestigationStore.ts [Client Component SSR]
+    ./src/app/(app)/copilot/page.tsx [Client Component SSR]
+    ./src/app/(app)/copilot/page.tsx [Server Component]
+
+Next.js version: 16.2.9 (Turbopack)
+
 
 args = Args()
 args.data = "Small_LI"

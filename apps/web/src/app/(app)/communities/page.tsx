@@ -103,7 +103,7 @@ export default function CommunitiesPage() {
               nodeLabel={(n: any) => `Node: ${n.id}\nCommunity: ${n.community}\nRisk: ${n.risk}`}
               nodeColor={(n: any) => getCommunityColor(n.community)}
               nodeRelSize={5}
-              linkColor={(l: any) => l.suspicious ? 'rgba(239, 68, 68, 0.95)' : 'rgba(100, 116, 139, 0.15)'}
+              linkColor={(l: any) => l.suspicious ? 'rgba(239, 68, 68, 0.95)' : 'rgba(100, 116, 139, 0.25)'}
               linkWidth={(l: any) => l.suspicious ? 2.5 : 1}
               onNodeClick={handleNodeClick}
               backgroundColor="#0F172A"

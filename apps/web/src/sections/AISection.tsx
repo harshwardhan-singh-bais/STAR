@@ -11,7 +11,9 @@ import { FADE_IN, FADE_UP, STAGGER_CONTAINER, STAGGER_ITEM_UP } from "@/animatio
 import { Bot, FileText, CheckCircle2, AlertTriangle, ShieldCheck } from "lucide-react";
 
 export default function AISection() {
-  const { activeSarDraft, isGeneratingSar } = useInvestigationStore();
+  const { activeInvestigationId, investigations, isGeneratingSar } = useInvestigationStore();
+  const activeInv = investigations.find((i) => i.id === activeInvestigationId);
+  const activeSarDraft = activeInv?.sarDraft || null;
   const { ref, isInView } = useScrollReveal();
 
   return (
