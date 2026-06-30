@@ -26,7 +26,7 @@ export default function CommunitiesPage() {
         setGraphData(data);
         setIsLoaded(true);
       })
-      .catch(console.error);
+      .catch(() => { /* silent */ });
   }, []);
 
   const handleNodeClick = useCallback(

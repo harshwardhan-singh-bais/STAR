@@ -42,7 +42,7 @@ export default function RiskEnginePage() {
           }
         }
       } catch (e) {
-        console.error("Failed to fetch IF stats", e);
+        // silent catch for offline backend
       }
     };
     

@@ -14,7 +14,7 @@ export default function AlertsPage() {
   const { alerts, setAlerts } = useAMLStore();
 
   useEffect(() => {
-    starApi.getAlerts().then(data => setAlerts(data as any)).catch(console.error);
+    starApi.getAlerts().then(data => setAlerts(data as any)).catch(() => { /* silent */ });
   }, [setAlerts]);
 
   return (

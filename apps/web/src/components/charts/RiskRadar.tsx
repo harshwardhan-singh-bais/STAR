@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from "recharts";
 
 interface RiskRadarProps {
@@ -8,8 +9,11 @@ interface RiskRadarProps {
 }
 
 export function RiskRadar({ data, color = "#F43F5E" }: RiskRadarProps) {
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
   return (
     <div className="w-full h-full min-h-[250px]">
+      {mounted && (
       <ResponsiveContainer width="100%" height="100%">
         <RadarChart cx="50%" cy="50%" outerRadius="70%" data={data}>
           <PolarGrid stroke="rgba(255,255,255,0.1)" />
@@ -32,6 +36,7 @@ export function RiskRadar({ data, color = "#F43F5E" }: RiskRadarProps) {
           />
         </RadarChart>
       </ResponsiveContainer>
+      )}
     </div>
   );
 }

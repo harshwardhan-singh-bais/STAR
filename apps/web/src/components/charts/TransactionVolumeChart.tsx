@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 
 interface TransactionVolumeChartProps {
@@ -8,8 +9,11 @@ interface TransactionVolumeChartProps {
 }
 
 export function TransactionVolumeChart({ data, height = 200 }: TransactionVolumeChartProps) {
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
   return (
     <div style={{ width: "100%", height }}>
+      {mounted && (
       <ResponsiveContainer>
         <AreaChart data={data} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
           <defs>
@@ -55,6 +59,7 @@ export function TransactionVolumeChart({ data, height = 200 }: TransactionVolume
           />
         </AreaChart>
       </ResponsiveContainer>
+      )}
     </div>
   );
 }

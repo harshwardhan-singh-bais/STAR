@@ -189,13 +189,13 @@ export default function TGNNDashboard() {
         setGraphData({ nodes: data.nodes, links: [] });
         setIsLoaded(true);
       })
-      .catch(e => console.warn("fetchGraph error:", e));
+      .catch(() => { /* silent catch for offline backend */ });
 
   const fetchCases = () =>
     fetch(`${API}/api/cases`)
       .then(r => r.json())
       .then(data => setCases(data))
-      .catch(e => console.warn("fetchCases error:", e));
+      .catch(() => { /* silent catch for offline backend */ });
 
   useEffect(() => {
     fetchGraph();
@@ -308,7 +308,7 @@ export default function TGNNDashboard() {
         fetchCases();
         setTimeout(() => graphRef.current?.zoomToFit(1000, 60), 1000);
       } else if (msg.type === "error") {
-        console.error("Inference error:", msg.message);
+        // silent catch for offline backend
         setIsRunning(false);
       }
     };

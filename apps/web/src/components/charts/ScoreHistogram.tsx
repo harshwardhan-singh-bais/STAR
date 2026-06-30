@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Cell } from "recharts";
 
 interface ScoreHistogramProps {
@@ -8,8 +9,11 @@ interface ScoreHistogramProps {
 }
 
 export function ScoreHistogram({ data, height = 200 }: ScoreHistogramProps) {
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
   return (
     <div style={{ width: "100%", height }}>
+      {mounted && (
       <ResponsiveContainer>
         <BarChart data={data} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
@@ -37,6 +41,7 @@ export function ScoreHistogram({ data, height = 200 }: ScoreHistogramProps) {
           </Bar>
         </BarChart>
       </ResponsiveContainer>
+      )}
     </div>
   );
 }

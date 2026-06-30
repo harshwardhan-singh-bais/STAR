@@ -106,42 +106,67 @@ Isolation Forest               GATe TGNN Inference
 
 ---
 
-## Quick Start
+## Quick Start Guide
 
-### 1. Backend
+Follow these instructions to properly set up and run the STAR platform on your local machine.
 
-```powershell
+### Prerequisites
+
+- **Python 3.10+**: Ensure Python is installed and accessible via command line.
+- **Node.js 18+**: Required for the Next.js frontend.
+- **uv**: The Python package manager. Install it via `pip install uv` if you don't have it.
+
+### 1. Backend Setup (FastAPI & ML Models)
+
+The backend handles the ML models (Isolation Forest, TGNN) and real-time websocket streams.
+
+```bash
+# Navigate to the backend directory
 cd backend
 
-# Install dependencies
+# Create and sync the virtual environment with dependencies
 uv sync
 
-# Install PyTorch (CPU)
+# Install PyTorch and PyTorch Geometric (CPU versions recommended for local demo)
 uv run pip install torch --index-url https://download.pytorch.org/whl/cpu
 uv run pip install torch-geometric -f https://data.pyg.org/whl/torch-2.2.0+cpu.html
 
-# Configure environment
-# Edit backend/.env and set GEMINI_API_KEY
+# (Optional) Configure environment variables
+# Copy .env.example to .env or create a .env file inside backend/ and set:
+# GEMINI_API_KEY=your_google_api_key
 
-# Start server
+# Start the FastAPI server
 uv run python -m app.main
-# → http://localhost:8000
-# → Docs: http://localhost:8000/docs
 ```
+> **Note for Conda/Venv Users**: If you already have a virtual environment active in your terminal, `uv run` might show a warning. For the best experience, ensure your terminal's active environment matches `backend/.venv`, or simply let `uv run` handle the environment context automatically.
 
-### 2. Frontend
+- API Server: http://localhost:8000
+- API Documentation (Swagger): http://localhost:8000/docs
 
-```powershell
+### 2. Frontend Setup (Next.js & UI)
+
+The frontend is a modern Next.js application that visualizes the real-time ML inference.
+
+```bash
+# Open a new terminal window and navigate to the frontend directory
 cd apps/web
 
+# Install Node dependencies
 npm install
+
+# Start the development server
 npm run dev
-# → http://localhost:3000
 ```
 
-### 3. Connect Frontend to Backend
+- Web App: http://localhost:3000
+- **TGNN Demo Dashboard**: http://localhost:3000/tgnn
 
-The frontend automatically connects to `ws://localhost:8000/ws/stream`. When the backend is running, the dashboard shows **real** AI-scored transactions instead of mock data.
+### 3. Running the Demo
+
+1. Ensure both the backend and frontend servers are running concurrently.
+2. Navigate to **http://localhost:3000/tgnn** in your browser.
+3. Click the **Start Demo** button in the top right.
+4. The system will stream historical transactions through the ML pipeline, rendering real-time Risk Scores, Graph Neural Network visual topologies, and Case Alerts entirely in your browser without requiring a Neo4j database (it will gracefully fall back to an in-memory graph).
 
 ---
 

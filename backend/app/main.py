@@ -8,6 +8,7 @@ import asyncio
 import logging
 import time
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -23,67 +24,8 @@ logger = logging.getLogger("star.main")
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(
-        title="STAR — Suspicious Transaction Analysis & Response",
-        description=(
-            "Real-time AML intelligence platform combining Isolation Forest, "
-            "Graph Attention Networks (GATe/TGNN), deterministic rule engine, "
-            "and LangChain + Gemini AI copilot."
-        ),
-        version="1.0.0",
-        docs_url="/docs",
-        redoc_url="/redoc",
-    )
-
-    # ── CORS ──────────────────────────────────────────────────
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.CORS_ORIGINS,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-
-    # ── Register Routers ──────────────────────────────────────
-    from app.api.routes.score import router as score_router
-    from app.api.routes.alerts import router as alerts_router
-    from app.api.routes.graph import router as graph_router
-    from app.api.routes.copilot import router as copilot_router
-    from app.api.routes.system import router as system_router
-    from app.api.routes.inference import router as inference_router
-    from app.api.websocket_route import router as ws_router
-    from app.api.inference_ws import router as inference_ws_router
-
-    app.include_router(score_router)
-    app.include_router(alerts_router)
-    app.include_router(graph_router)
-    app.include_router(copilot_router)
-    app.include_router(system_router)
-    app.include_router(inference_router)
-    app.include_router(ws_router)
-    app.include_router(inference_ws_router)
-
-    # ── Root endpoint ─────────────────────────────────────────
-    @app.get("/")
-    async def root():
-        return {
-            "name": "STAR AML Intelligence Backend",
-            "version": "1.0.0",
-            "status": "online",
-            "docs": "/docs",
-            "health": "/system/health",
-            "ws_stream": "/ws/stream",
-            "ws_graph": "/ws/graph",
-        }
-
-    @app.get("/health")
-    async def quick_health():
-        """Quick liveness probe."""
-        return {"status": "ok", "ts": time.time()}
-
-    # ── Lifecycle ─────────────────────────────────────────────
-    @app.on_event("startup")
-    async def startup():
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
         logger.info("=" * 60)
         logger.info("🚀 STAR AML Intelligence Backend starting up...")
         logger.info("=" * 60)
@@ -153,11 +95,71 @@ def create_app() -> FastAPI:
         logger.info("   WS:       ws://localhost:%d/ws/stream", settings.PORT)
         logger.info("=" * 60)
 
-    @app.on_event("shutdown")
-    async def shutdown():
-        from app.websocket.stream_manager import transaction_stream_manager
+        yield
+
         await transaction_stream_manager.stop()
         logger.info("STAR backend shut down")
+
+    app = FastAPI(
+        title="STAR — Suspicious Transaction Analysis & Response",
+        description=(
+            "Real-time AML intelligence platform combining Isolation Forest, "
+            "Graph Attention Networks (GATe/TGNN), deterministic rule engine, "
+            "and LangChain + Gemini AI copilot."
+        ),
+        version="1.0.0",
+        docs_url="/docs",
+        redoc_url="/redoc",
+        lifespan=lifespan,
+    )
+
+    # ── CORS ──────────────────────────────────────────────────
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.CORS_ORIGINS,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    # ── Register Routers ──────────────────────────────────────
+    from app.api.routes.score import router as score_router
+    from app.api.routes.alerts import router as alerts_router
+    from app.api.routes.graph import router as graph_router
+    from app.api.routes.copilot import router as copilot_router
+    from app.api.routes.system import router as system_router
+    from app.api.routes.inference import router as inference_router
+    from app.api.websocket_route import router as ws_router
+    from app.api.inference_ws import router as inference_ws_router
+
+    app.include_router(score_router)
+    app.include_router(alerts_router)
+    app.include_router(graph_router)
+    app.include_router(copilot_router)
+    app.include_router(system_router)
+    app.include_router(inference_router)
+    app.include_router(ws_router)
+    app.include_router(inference_ws_router)
+
+    # ── Root endpoint ─────────────────────────────────────────
+    @app.get("/")
+    async def root():
+        return {
+            "name": "STAR AML Intelligence Backend",
+            "version": "1.0.0",
+            "status": "online",
+            "docs": "/docs",
+            "health": "/system/health",
+            "ws_stream": "/ws/stream",
+            "ws_graph": "/ws/graph",
+        }
+
+    @app.get("/health")
+    async def quick_health():
+        """Quick liveness probe."""
+        return {"status": "ok", "ts": time.time()}
+
+    # (Lifecycle is now handled in lifespan)
 
     return app
 

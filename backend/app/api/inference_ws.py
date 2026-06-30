@@ -34,16 +34,15 @@ async def websocket_inference(websocket: WebSocket, threshold: float = 0.35):
         return
 
     driver = neo4j_service._async_driver
-    if not driver:
-        await websocket.send_json({"type": "error", "message": "Neo4j not connected."})
-        await websocket.close()
-        return
+    # If driver is None, we run in degraded in-memory mode without cycle detection
 
-    # Clean Neo4j state to allow refreshing/re-running the inference cleanly
-    async with driver.session() as session:
-        await session.run("MATCH ()-[t:TRANSACT]->() DELETE t")
-        await session.run("MATCH (a:Alert) DETACH DELETE a")
-        await session.run("MATCH (n:Person) SET n.status = 'STABLE'")
+    if driver:
+        async with driver.session() as session:
+            await session.run("MATCH ()-[t:TRANSACT]->() DELETE t")
+            await session.run("MATCH (a:Alert) DETACH DELETE a")
+            await session.run("MATCH (n:Person) SET n.status = 'STABLE'")
+    else:
+        neo4j_service._in_memory_cases = []
 
     SCENARIO = inference_service.SCENARIO
     GNN_SCORES = inference_service.GNN_SCORES
@@ -76,15 +75,16 @@ async def websocket_inference(websocket: WebSocket, threshold: float = 0.35):
         receiver_name = names[tx.receiver_idx]
 
         # Write transaction to Neo4j
-        async with driver.session() as session:
-            await session.run("""
-                MATCH (s:Person {id: $s_id})
-                MATCH (r:Person {id: $r_id})
-                CREATE (s)-[:TRANSACT {
-                    tx_id: $tx_id, amount: $amt, type: $type, review_status: 'UNCHECKED', timestamp: $timestamp
-                }]->(r)
-            """, s_id=sender_name, r_id=receiver_name, tx_id=tx_id,
-                 amt=tx.amount_sent, type="Transaction", timestamp=str(tx.timestamp))
+        if driver:
+            async with driver.session() as session:
+                await session.run("""
+                    MATCH (s:Person {id: $s_id})
+                    MATCH (r:Person {id: $r_id})
+                    CREATE (s)-[:TRANSACT {
+                        tx_id: $tx_id, amount: $amt, type: $type, review_status: 'UNCHECKED', timestamp: $timestamp
+                    }]->(r)
+                """, s_id=sender_name, r_id=receiver_name, tx_id=tx_id,
+                     amt=tx.amount_sent, type="Transaction", timestamp=str(tx.timestamp))
 
         # ── Pure GNN Score (precomputed) ──
         gnn_score = GNN_SCORES[i]
@@ -111,7 +111,7 @@ async def websocket_inference(websocket: WebSocket, threshold: float = 0.35):
         # ── Trigger Logic: Explicit Neo4j Cycle Detection ──
         cycle_path = []
         cycle_edges = []
-        if is_alert:
+        if is_alert and driver:
             async with driver.session() as session:
                 result = await session.run("""
                     MATCH path = (r:Person {id: $r_id})-[:TRANSACT*1..3]->(s:Person {id: $s_id})
@@ -163,23 +163,34 @@ async def websocket_inference(websocket: WebSocket, threshold: float = 0.35):
 
         if is_alert:
             case_id = f"CASE_{tx_id}"
-            async with driver.session() as session:
-                await session.run("""
-                    MATCH (s:Person {id: $s_id})
-                    MATCH (s)-[t:TRANSACT {tx_id: $tx_id}]->()
-                    SET s.status = 'SUSPICIOUS', t.review_status = 'PENDING_REVIEW'
-                    CREATE (a:Alert {
-                        id: $case_id, tx_id: $tx_id, risk_score: $risk,
-                        status: 'PENDING_REVIEW', tx_type: $type, timestamp: datetime(),
-                        tx_timestamp: $tx_timestamp, currency: $currency, payment_format: $format,
-                        cycle_path: $cycle_path_json, cycle_edges: $cycle_edges_json,
-                        sender: $s_id, receiver: $r_id
-                    })-[:FLAGGED_BY]->(s)
-                """, s_id=sender_name, r_id=receiver_name, tx_id=tx_id, case_id=case_id,
-                     risk=risk_score, type=tx_type,
-                     tx_timestamp=tx.timestamp, currency=currency_label, format=format_label,
-                     cycle_path_json=json.dumps(cycle_path),
-                     cycle_edges_json=json.dumps(cycle_edges))
+            if driver:
+                async with driver.session() as session:
+                    await session.run("""
+                        MATCH (s:Person {id: $s_id})
+                        MATCH (s)-[t:TRANSACT {tx_id: $tx_id}]->()
+                        SET s.status = 'SUSPICIOUS', t.review_status = 'PENDING_REVIEW'
+                        CREATE (a:Alert {
+                            id: $case_id, tx_id: $tx_id, risk_score: $risk,
+                            status: 'PENDING_REVIEW', tx_type: $type, timestamp: datetime(),
+                            tx_timestamp: $tx_timestamp, currency: $currency, payment_format: $format,
+                            cycle_path: $cycle_path_json, cycle_edges: $cycle_edges_json,
+                            sender: $s_id, receiver: $r_id
+                        })-[:FLAGGED_BY]->(s)
+                    """, s_id=sender_name, r_id=receiver_name, tx_id=tx_id, case_id=case_id,
+                         risk=risk_score, type=tx_type,
+                         tx_timestamp=tx.timestamp, currency=currency_label, format=format_label,
+                         cycle_path_json=json.dumps(cycle_path),
+                         cycle_edges_json=json.dumps(cycle_edges))
+            else:
+                if not hasattr(neo4j_service, "_in_memory_cases"):
+                    neo4j_service._in_memory_cases = []
+                neo4j_service._in_memory_cases.append({
+                    "case_id": case_id, "tx_id": tx_id, "sender": sender_name, "receiver": receiver_name,
+                    "amount": tx.amount_sent, "risk_score": risk_score, "tx_type": tx_type,
+                    "currency": currency_label, "payment_format": format_label,
+                    "timestamp": tx.timestamp, "created_at": str(tx.timestamp),
+                    "cycle_path": cycle_path, "cycle_edges": cycle_edges
+                })
 
             await websocket.send_json({
                 "type": "alert",

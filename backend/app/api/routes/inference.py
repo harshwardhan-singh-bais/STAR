@@ -52,7 +52,8 @@ async def get_inference_cases():
     Exact port of demo_server.py /api/cases endpoint.
     """
     if not neo4j_service.is_connected:
-        raise HTTPException(503, "Neo4j not connected.")
+        cases = getattr(neo4j_service, "_in_memory_cases", [])
+        return sorted(cases, key=lambda x: x["risk_score"], reverse=True)
 
     async with neo4j_service._async_driver.session() as session:
         res = await session.run("""
@@ -86,7 +87,8 @@ async def get_case_subgraph(case_id: str):
     else → ego-network of sender+receiver.
     """
     if not neo4j_service.is_connected:
-        raise HTTPException(503, "Neo4j not connected.")
+        # Fallback empty subgraph if no Neo4j
+        return {"nodes": [], "links": [], "cycle_path": [], "pattern_type": "Normal", "focus_tx": "", "sender": "", "receiver": ""}
 
     async with neo4j_service._async_driver.session() as session:
         # Get alert metadata
@@ -185,7 +187,14 @@ async def review_inference_case(case_id: str, payload: dict):
     Exact port of demo_server.py /api/cases/{case_id}/review endpoint.
     """
     if not neo4j_service.is_connected:
-        raise HTTPException(503, "Neo4j not connected.")
+        decision = payload.get("decision", "APPROVED")
+        # Find and update in memory cases
+        cases = getattr(neo4j_service, "_in_memory_cases", [])
+        for c in cases:
+            if c["case_id"] == case_id:
+                cases.remove(c)
+                break
+        return {"status": "success", "decision": decision}
 
     decision = payload.get("decision", "APPROVED")
 
