@@ -19,7 +19,7 @@ export default function CopilotPage() {
     setTimeout(() => {
       setIsFiling(false);
       if (activeSarDraft) {
-        setActiveSar({ ...activeSarDraft, status: "filed" });
+        setActiveSar({ ...activeSarDraft, status: "submitted" });
       }
       setToastMessage("Filing submitted securely to FinCEN via batch API.");
       setTimeout(() => setToastMessage(""), 4000);
@@ -89,7 +89,7 @@ export default function CopilotPage() {
                     animate={{ opacity: 1, y: 0 }}
                     className="absolute inset-0 flex flex-col"
                   >
-                    {activeSarDraft.status === "filed" ? (
+                    {activeSarDraft.status === "submitted" ? (
                       <div className="flex items-center gap-2 mb-4 text-[#2563EB] text-xs font-mono px-3 py-1.5 rounded w-fit animate-pulse" style={{ backgroundColor: "rgba(37, 99, 235, 0.1)", border: "1px solid rgba(37, 99, 235, 0.2)" }}>
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         SUBMITTED TO FINCEN
@@ -143,7 +143,7 @@ export default function CopilotPage() {
                           Save Draft
                         </button>
                       </div>
-                    ) : activeSarDraft.status === "filed" ? (
+                    ) : activeSarDraft.status === "submitted" ? (
                       <div className="mt-4 flex flex-col gap-2">
                         <div className="w-full text-center text-xs text-[#2563EB] font-semibold py-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-center gap-1.5">
                           <CheckCircle2 className="w-4 h-4 text-[#2563EB]" />
