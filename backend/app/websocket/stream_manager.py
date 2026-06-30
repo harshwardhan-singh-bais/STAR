@@ -162,21 +162,22 @@ async def run_pipeline_on_transaction(
         if tgnn_data["is_alert"]:
             tx_type_str = tx_type_str if tx_type_str != "Normal" else "Anomaly"
             # Dynamic Cycle Detection
-            async with neo4j_service._async_driver.session() as session:
-                result = await session.run("""
-                    MATCH path = (r:Account {id: $r_id})-[:TRANSACT*1..3]->(s:Account {id: $s_id})
-                    WHERE $r_id <> $s_id
-                    RETURN
-                        [n IN nodes(path) | n.id] AS cycle_nodes,
-                        [rel IN relationships(path) | rel.tx_id] AS cycle_edges
-                    LIMIT 1
-                """, r_id=tx.to_account, s_id=tx.from_account)
-                record = await result.single()
-                if record is not None:
-                    cycle_path = [tx.from_account] + record["cycle_nodes"]
-                    cycle_edges = record["cycle_edges"] + [tx.id]
-                    tgnn_data["reasons"].append("Circular Routing Typology Detected")
-                    tx_type_str = "Circular"
+            if neo4j_service.is_connected:
+                async with neo4j_service._async_driver.session() as session:
+                    result = await session.run("""
+                        MATCH path = (r:Account {id: $r_id})-[:TRANSACT*1..3]->(s:Account {id: $s_id})
+                        WHERE $r_id <> $s_id
+                        RETURN
+                            [n IN nodes(path) | n.id] AS cycle_nodes,
+                            [rel IN relationships(path) | rel.tx_id] AS cycle_edges
+                        LIMIT 1
+                    """, r_id=tx.to_account, s_id=tx.from_account)
+                    record = await result.single()
+                    if record is not None:
+                        cycle_path = [tx.from_account] + record["cycle_nodes"]
+                        cycle_edges = record["cycle_edges"] + [tx.id]
+                        tgnn_data["reasons"].append("Circular Routing Typology Detected")
+                        tx_type_str = "Circular"
 
         tgnn_payload = {
             "type": tgnn_type,
