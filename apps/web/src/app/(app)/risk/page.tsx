@@ -92,17 +92,17 @@ export default function RiskEnginePage() {
   }, []);
 
   return (
-    <div className="p-6 lg:p-10 max-w-[1600px] mx-auto min-h-[calc(100vh-64px)]">
-      <div className="mb-8 flex items-center justify-between">
+    <div className="p-6 max-w-[1600px] mx-auto" style={{ background: "#F4F6F9", minHeight: "100%" }}>
+      <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
-            <Search className="w-8 h-8 text-[#A855F7]" />
-            Risk Engine
+          <h1 className="page-title flex items-center gap-2">
+            <Search className="w-5 h-5" style={{ color: "#7C3AED" }} />
+            Entity Search
           </h1>
-          <p className="text-[#94A3B8]">Isolation Forest anomaly scoring and feature contribution.</p>
+          <p className="page-subtitle">Isolation Forest anomaly scoring and feature contribution.</p>
         </div>
-        <div className="flex gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#A855F7]/10 border border-[#A855F7]/30 text-[#A855F7] hover:bg-[#A855F7]/20 transition-colors text-sm font-bold">
+        <div className="flex gap-2">
+          <button className="btn-secondary">
             Retrain Model
           </button>
         </div>
@@ -124,14 +124,14 @@ export default function RiskEnginePage() {
         {/* Score Distribution */}
         <motion.div variants={STAGGER_ITEM_UP} className="col-span-1 md:col-span-2">
           <GlassCard className="p-6 h-[400px] flex flex-col">
-            <h3 className="font-bold text-white text-sm mb-6 flex items-center gap-2">
-              <Brain className="w-4 h-4 text-[#A855F7]" />
+            <h3 className="font-semibold mb-4 flex items-center gap-2" style={{ fontSize: "13px", color: "#0F172A" }}>
+              <Brain className="w-4 h-4" style={{ color: "#7C3AED" }} />
               Isolation Score Distribution
             </h3>
             <div className="flex-1 -ml-4">
               <ScoreHistogram data={histogramData} height={300} />
             </div>
-            <div className="mt-4 flex gap-4 text-xs font-mono justify-center border-t border-white/5 pt-4">
+            <div className="mt-4 flex gap-4 justify-center pt-4" style={{ borderTop: "1px solid #F1F5F9", fontSize: "11px" }}>
               <div className="flex items-center gap-2 text-[#3B82F6]"><div className="w-3 h-3 rounded-sm bg-[#3B82F6]/40 border border-[#3B82F6]" /> Normal Behavior (&lt; 0.6)</div>
               <div className="flex items-center gap-2 text-[#F43F5E]"><div className="w-3 h-3 rounded-sm bg-[#F43F5E]/80 border border-[#F43F5E]" /> Anomalous (&gt;= 0.6)</div>
             </div>
@@ -140,16 +140,16 @@ export default function RiskEnginePage() {
 
         {/* Feature Importance (SHAP) */}
         <motion.div variants={STAGGER_ITEM_UP} className="col-span-1">
-          <GlassCard className="p-6 h-[400px] flex flex-col border-t-2 border-t-[#00F5FF]">
-            <h3 className="font-bold text-white text-sm mb-6">Global Feature Importance (SHAP)</h3>
+          <GlassCard className="p-6 h-[400px] flex flex-col" style={{ borderTopColor: "#1A56DB", borderTopWidth: "4px" }}>
+            <h3 className="font-semibold mb-4" style={{ fontSize: "13px", color: "#0F172A" }}>Global Feature Importance (SHAP)</h3>
             <div className="flex-1 flex flex-col justify-center gap-4">
               {modelStatus === "online" ? features.map((f, i) => (
                 <div key={f.name}>
-                  <div className="flex justify-between text-[10px] font-mono text-[#E2E8F0] mb-1.5 uppercase">
+                  <div className="flex justify-between mb-1.5 uppercase" style={{ fontSize: "10px", color: "#64748B", fontWeight: 600, letterSpacing: "0.04em" }}>
                     <span>{f.name}</span>
-                    <span>{(f.weight * 100).toFixed(1)}%</span>
+                    <span style={{ color: "#0F172A" }}>{(f.weight * 100).toFixed(1)}%</span>
                   </div>
-                  <div className="h-1.5 bg-[#0F172A] rounded-full overflow-hidden">
+                  <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "#F1F5F9" }}>
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${f.weight * 100}%` }}

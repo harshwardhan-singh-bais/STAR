@@ -17,25 +17,25 @@
   --color-primary-dark: #1E3A8A;
   --color-secondary: #64748B;
 
-  /* Backgrounds — Dark Theme (Matched to project) */
-  --color-bg-primary: transparent;
-  --color-bg-secondary: rgba(255, 255, 255, 0.03);
-  --color-bg-tertiary: rgba(255, 255, 255, 0.05);
-  --color-bg-card: rgba(15, 23, 42, 0.6);
+  /* Backgrounds — Light Theme (Matched to project) */
+  --color-bg-primary: #F8FAFC;
+  --color-bg-secondary: #FFFFFF;
+  --color-bg-tertiary: #F1F5F9;
+  --color-bg-card: #FFFFFF;
 
   /* Accents */
-  --color-accent-blue: #00F5FF;
-  --color-accent-indigo: #A855F7;
-  --color-accent-teal: #14B8A6;
+  --color-accent-blue: #0284C7;
+  --color-accent-indigo: #7C3AED;
+  --color-accent-teal: #0D9488;
 
   /* Text */
-  --color-text-primary: #FFFFFF;
-  --color-text-secondary: #E2E8F0;
-  --color-text-muted: #94A3B8;
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #334155;
+  --color-text-muted: #64748B;
 
   /* Borders */
-  --color-border-light: rgba(255, 255, 255, 0.1);
-  --color-border-medium: rgba(255, 255, 255, 0.2);
+  --color-border-light: #E2E8F0;
+  --color-border-medium: #CBD5E1;
 
   /* Risk */
   --color-risk-critical: #F43F5E;
@@ -64,7 +64,7 @@
   height: 64px; min-height: 64px;
   display: flex; align-items: center; justify-content: space-between;
   padding: 0 24px;
-  background: rgba(15, 23, 42, 0.5);
+  background: #FFFFFF;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--color-border-light);
@@ -113,7 +113,7 @@
 /* ── STATS ROW ── */
 .tgnn-root .stats-row {
   display: flex; align-items: stretch;
-  background: rgba(15, 23, 42, 0.4);
+  background: #FFFFFF;
   backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--color-border-light);
 }
@@ -141,12 +141,12 @@
 .tgnn-root .table-panel {
   flex: 0 0 60%; display: flex; flex-direction: column;
   border-right: 1px solid var(--color-border-light); min-width: 0;
-  background: rgba(15, 23, 42, 0.3);
+  background: #F8FAFC;
 }
 .tgnn-root .table-toolbar {
   display: flex; align-items: center; justify-content: space-between;
   padding: 12px 16px; gap: 12px;
-  background: rgba(15, 23, 42, 0.4);
+  background: #FFFFFF;
   backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--color-border-light);
 }
@@ -172,7 +172,7 @@
 /* ── DATA TABLE ── */
 .tgnn-root .table-container { flex: 1; overflow-y: auto; overflow-x: auto; background: var(--color-bg-primary); }
 .tgnn-root .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.tgnn-root .data-table thead { position: sticky; top: 0; z-index: 10; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+.tgnn-root .data-table thead { position: sticky; top: 0; z-index: 10; background: #FFFFFF; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
 .tgnn-root .data-table thead th {
   padding: 12px 16px; font-size: 11px; font-weight: 600; color: var(--color-text-muted);
   text-transform: uppercase; letter-spacing: 0.07em; text-align: left; white-space: nowrap;
@@ -240,7 +240,7 @@
 .tgnn-root .graph-panel { flex: 0 0 40%; display: flex; flex-direction: column; background: var(--color-bg-primary); min-width: 0; overflow: hidden; }
 .tgnn-root .panel-header {
   display: flex; align-items: center; justify-content: space-between; padding: 12px 16px;
-  background: rgba(15,23,42,0.6); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  background: #FFFFFF; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--color-border-light);
 }
 .tgnn-root .panel-title { font-size: 11px; font-weight: 600; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
@@ -256,7 +256,7 @@
 
 /* ── CASE REVIEW ── */
 .tgnn-root .case-review {
-  border-top: 1px solid var(--color-border-light); background: rgba(15,23,42,0.8);
+  border-top: 1px solid var(--color-border-light); background: #FFFFFF;
   backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
   display: flex; flex-direction: column; animation: tgnn-slide-up 0.2s ease-out; max-height: 52%; overflow-y: auto;
 }

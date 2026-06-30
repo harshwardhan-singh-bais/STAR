@@ -1,6 +1,7 @@
 "use client";
 
 import { useAnimatedNumber } from "@/hooks/useAnimatedNumber";
+import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 
 interface MetricCardProps {
   label: string;
@@ -9,57 +10,92 @@ interface MetricCardProps {
   suffix?: string;
   trend?: number;
   icon?: any;
+  /** Accent color — used for left border and icon bg */
   color?: string;
+  description?: string;
 }
 
-export function MetricCard({ 
-  label, 
-  value, 
-  prefix = "", 
-  suffix = "", 
+export function MetricCard({
+  label,
+  value,
+  prefix = "",
+  suffix = "",
   trend,
   icon: Icon,
-  color = "#00F5FF"
+  color = "#1A56DB",
+  description,
 }: MetricCardProps) {
-  
   const animatedValue = useAnimatedNumber(value);
 
-  // Formatting for decimals vs integers
-  const displayValue = value % 1 === 0 
-    ? Math.floor(animatedValue).toLocaleString()
-    : animatedValue.toFixed(1);
+  const displayValue =
+    value % 1 === 0
+      ? Math.floor(animatedValue).toLocaleString()
+      : animatedValue.toFixed(1);
+
+  const trendPositive = trend !== undefined && trend >= 0;
 
   return (
-    <div 
-      className="glass-card rounded-xl p-4 transition-all duration-300 hover-glow-cyan"
-      style={{ border: `1px solid ${color}20` }}
-      onMouseEnter={e => {
-        (e.currentTarget as HTMLElement).style.borderColor = `${color}40`;
-      }}
-      onMouseLeave={e => {
-        (e.currentTarget as HTMLElement).style.borderColor = `${color}20`;
-      }}
+    <div
+      className="metric-card-accent"
+      style={{ borderLeftColor: color }}
     >
-      <div className="flex items-center gap-2 mb-2">
-        {Icon && (
-          <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${color}15` }}>
-            <Icon className="w-3.5 h-3.5" style={{ color }} />
+      {/* Header row */}
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center gap-2">
+          {Icon && (
+            <div
+              className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0"
+              style={{ background: `${color}15` }}
+            >
+              <Icon className="w-4 h-4" style={{ color }} />
+            </div>
+          )}
+          <span
+            className="text-xs font-semibold uppercase tracking-wide"
+            style={{ color: "#64748B" }}
+          >
+            {label}
+          </span>
+        </div>
+
+        {/* Trend badge */}
+        {trend !== undefined && (
+          <div
+            className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-semibold"
+            style={{
+              background: trendPositive ? "#DCFCE7" : "#FEE2E2",
+              color: trendPositive ? "#16A34A" : "#DC2626",
+            }}
+          >
+            {trend > 0 ? (
+              <TrendingUp className="w-3 h-3" />
+            ) : trend < 0 ? (
+              <TrendingDown className="w-3 h-3" />
+            ) : (
+              <Minus className="w-3 h-3" />
+            )}
+            {trend > 0 ? "+" : ""}
+            {trend}%
           </div>
         )}
-        <span className="text-[10px] font-mono text-[#475569] uppercase tracking-wider">{label}</span>
       </div>
-      
-      <div className="flex items-baseline gap-2">
-        <div className="text-2xl font-bold font-mono text-white">
-          {prefix}{displayValue}{suffix}
+
+      {/* Value */}
+      <div
+        className="text-2xl font-bold"
+        style={{ color: "#0F172A", fontVariantNumeric: "tabular-nums" }}
+      >
+        {prefix}
+        {displayValue}
+        {suffix}
+      </div>
+
+      {/* Optional description */}
+      {description && (
+        <div className="mt-1 text-xs" style={{ color: "#94A3B8" }}>
+          {description}
         </div>
-        
-        {trend !== undefined && (
-          <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${trend >= 0 ? "text-[#10B981] bg-[#10B981]/10" : "text-[#F43F5E] bg-[#F43F5E]/10"}`}>
-            {trend > 0 ? "+" : ""}{trend}%
-          </span>
-        )}
-      </div>
+      )}
     </div>
   );
 }

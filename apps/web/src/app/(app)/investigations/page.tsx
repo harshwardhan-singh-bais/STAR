@@ -1,26 +1,34 @@
 "use client";
 
-import { GlassCard } from "@/components/ui/GlassCard";
-import { Briefcase, FolderOpen } from "lucide-react";
+import { SurfaceCard } from "@/components/ui/GlassCard";
+import { Briefcase, FolderOpen, Plus } from "lucide-react";
 
 export default function InvestigationsPage() {
   return (
-    <div className="p-6 lg:p-10 max-w-[1600px] mx-auto min-h-[calc(100vh-64px)]">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
-          <Briefcase className="w-8 h-8 text-[#3B82F6]" />
-          Case Management
-        </h1>
-        <p className="text-[#94A3B8]">Investigator workspace and SAR filings.</p>
+    <div className="p-6 max-w-[1600px] mx-auto" style={{ background: "#F4F6F9", minHeight: "100%" }}>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="page-title flex items-center gap-2">
+            <Briefcase className="w-5 h-5" style={{ color: "#1A56DB" }} />
+            Investigations
+          </h1>
+          <p className="page-subtitle">Investigator workspace and SAR filings.</p>
+        </div>
+        <button className="btn-primary">
+          <Plus className="w-3.5 h-3.5" />
+          New Case
+        </button>
       </div>
 
-      <GlassCard className="p-12 flex flex-col items-center justify-center opacity-50 border-dashed h-[500px]">
-        <FolderOpen className="w-16 h-16 text-[#475569] mb-4" />
-        <h2 className="text-xl font-bold text-white mb-2">No Active Cases</h2>
-        <p className="text-[#94A3B8] text-sm text-center max-w-md">
-          Start an investigation from the Alert Center or AI Copilot to generate a new case file.
+      <SurfaceCard className="flex flex-col items-center justify-center" style={{ minHeight: "440px", borderStyle: "dashed" }}>
+        <FolderOpen className="w-12 h-12 mb-4" style={{ color: "#CBD5E1" }} />
+        <h2 className="font-semibold mb-2" style={{ fontSize: "16px", color: "#334155" }}>
+          No Active Cases
+        </h2>
+        <p className="text-center max-w-md" style={{ fontSize: "13px", color: "#94A3B8" }}>
+          Start an investigation from the Alert Queue or AI Copilot to generate a new case file.
         </p>
-      </GlassCard>
+      </SurfaceCard>
     </div>
   );
 }

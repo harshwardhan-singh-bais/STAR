@@ -46,10 +46,10 @@ export default function CommunitiesPage() {
   const numCommunities = graphData ? new Set(graphData.nodes.map(n => n.community)).size : 0;
 
   return (
-    <div className="p-6 lg:p-10 max-w-[1600px] mx-auto h-[calc(100vh-64px)] flex flex-col">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-white mb-2">Community Detection</h1>
-        <p className="text-[#94A3B8]">
+    <div className="p-6 max-w-[1600px] mx-auto flex flex-col" style={{ background: "#F4F6F9", minHeight: "100%" }}>
+      <div className="mb-5">
+        <h1 className="page-title">Community Detection</h1>
+        <p className="page-subtitle">
           Louvain Modularity structural clustering of the transaction network.
         </p>
       </div>
@@ -62,16 +62,16 @@ export default function CommunitiesPage() {
 
       <GlassCard className="flex-1 relative overflow-hidden flex flex-col p-0 border border-white/10 shadow-2xl">
         {!isLoaded && (
-          <div className="absolute inset-0 z-50 flex items-center justify-center bg-[#020617]/80 backdrop-blur-sm">
+          <div className="absolute inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(248,250,252,0.9)" }}>
             <div className="flex flex-col items-center gap-4">
-              <div className="w-10 h-10 border-4 border-[#00F5FF]/20 border-t-[#00F5FF] rounded-full animate-spin" />
-              <p className="text-[#00F5FF] font-mono text-sm animate-pulse">Running Louvain Modularity Algorithm...</p>
+              <div className="w-8 h-8 border-4 rounded-full animate-spin" style={{ borderColor: "#E2E8F0", borderTopColor: "#1A56DB" }} />
+              <p style={{ color: "#1A56DB", fontSize: "13px", fontWeight: 500 }}>Running Louvain Modularity Algorithm...</p>
             </div>
           </div>
         )}
 
-        <div className="absolute top-4 left-4 z-10 bg-[#020617]/80 p-4 rounded-lg border border-white/10 backdrop-blur-md">
-          <h3 className="text-white font-bold mb-2">Topology Key</h3>
+        <div className="absolute top-4 left-4 z-10 p-4 rounded-lg" style={{ background: "rgba(255,255,255,0.95)", border: "1px solid #E2E8F0", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
+          <h3 className="font-semibold mb-2" style={{ fontSize: "12px", color: "#0F172A" }}>Topology Key</h3>
           <div className="space-y-2 text-xs">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-[hsl(45,70%,50%)]" />

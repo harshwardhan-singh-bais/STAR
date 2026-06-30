@@ -3,32 +3,56 @@
 import { HTMLAttributes } from "react";
 import { motion, HTMLMotionProps } from "framer-motion";
 
-interface GlassCardProps extends HTMLMotionProps<"div"> {
-  intensity?: "light" | "medium" | "heavy" | "cyber";
-  hoverEffect?: boolean;
+interface SurfaceCardProps extends HTMLMotionProps<"div"> {
+  elevated?: boolean;
+  noPadding?: boolean;
 }
 
-export function GlassCard({ 
-  children, 
-  className = "", 
-  intensity = "medium", 
-  hoverEffect = false,
-  ...props 
-}: GlassCardProps) {
-  
-  let baseClass = "glass";
-  if (intensity === "heavy") baseClass = "glass-strong";
-  if (intensity === "light") baseClass = "glass-card";
-  if (intensity === "cyber") baseClass = "glass-cyber";
-
-  const hoverClass = hoverEffect ? "hover-glow-cyan transition-all duration-300" : "";
+/**
+ * SurfaceCard — Professional white card with subtle elevation.
+ * Replaces GlassCard everywhere in the dashboard.
+ */
+export function SurfaceCard({
+  children,
+  className = "",
+  elevated = false,
+  noPadding = false,
+  ...props
+}: SurfaceCardProps) {
+  const baseClass = elevated ? "surface-card-elevated" : "surface-card";
 
   return (
-    <motion.div 
-      className={`${baseClass} ${hoverClass} rounded-2xl ${className}`}
+    <motion.div
+      className={`${baseClass} surface-card-hover ${className}`}
       {...props}
     >
       {children}
     </motion.div>
+  );
+}
+
+/**
+ * GlassCard kept as alias for backward compat with landing page sections.
+ * Dashboard should use SurfaceCard instead.
+ */
+export function GlassCard({
+  children,
+  className = "",
+  intensity = "medium",
+  hoverEffect = false,
+  ...props
+}: {
+  children?: React.ReactNode;
+  className?: string;
+  intensity?: "light" | "medium" | "heavy" | "cyber";
+  hoverEffect?: boolean;
+  [key: string]: any;
+}) {
+  // In app context (light theme), render as surface card
+  // In landing context, render as glass card
+  return (
+    <SurfaceCard className={className} {...props}>
+      {children}
+    </SurfaceCard>
   );
 }

@@ -16,23 +16,23 @@ export function ScoreHistogram({ data, height = 200 }: ScoreHistogramProps) {
       {mounted && (
       <ResponsiveContainer>
         <BarChart data={data} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
           <XAxis 
             dataKey="range" 
-            tick={{ fill: "#475569", fontSize: 10, fontFamily: "JetBrains Mono" }}
+            tick={{ fill: "#94A3B8", fontSize: 10 }}
             axisLine={false}
             tickLine={false}
           />
           <YAxis 
-            tick={{ fill: "#475569", fontSize: 10, fontFamily: "JetBrains Mono" }}
+            tick={{ fill: "#94A3B8", fontSize: 10 }}
             axisLine={false}
             tickLine={false}
           />
           <Tooltip 
-            cursor={{ fill: "rgba(255,255,255,0.05)" }}
-            contentStyle={{ backgroundColor: "#0f172a", borderColor: "rgba(255,255,255,0.1)", borderRadius: "8px" }}
-            itemStyle={{ fontFamily: "JetBrains Mono", fontSize: "12px", color: "#E2E8F0" }}
-            labelStyle={{ color: "#94a3b8", marginBottom: "4px", fontFamily: "JetBrains Mono" }}
+            cursor={{ fill: "rgba(0,0,0,0.03)" }}
+            contentStyle={{ backgroundColor: "#FFFFFF", borderColor: "#E2E8F0", borderRadius: "6px", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}
+            itemStyle={{ fontSize: "12px", color: "#334155" }}
+            labelStyle={{ color: "#64748B", marginBottom: "4px", fontWeight: 600 }}
           />
           <Bar dataKey="count" radius={[2, 2, 0, 0]}>
             {data.map((entry, index) => (

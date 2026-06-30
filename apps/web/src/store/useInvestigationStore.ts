@@ -29,7 +29,7 @@ interface InvestigationState {
 
 export const useInvestigationStore = create<InvestigationState>((set, get) => ({
   activeInvestigationId: "INV-2024-089",
-  messages: AI_MESSAGES,
+  messages: [],
   isTyping: false,
 
   activeSarDraft: null,

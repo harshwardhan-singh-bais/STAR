@@ -1,67 +1,98 @@
 "use client";
 
-import { GlassCard } from "@/components/ui/GlassCard";
-import { Settings, Sliders, HardDrive, Bell } from "lucide-react";
+import { SurfaceCard } from "@/components/ui/GlassCard";
+import { Settings, Sliders, HardDrive, Bell, Save } from "lucide-react";
 
 export default function SettingsPage() {
   return (
-    <div className="p-6 lg:p-10 max-w-[1600px] mx-auto min-h-[calc(100vh-64px)]">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
-          <Settings className="w-8 h-8 text-[#94A3B8]" />
-          Platform Configuration
-        </h1>
-        <p className="text-[#94A3B8]">Manage ML thresholds, visual preferences, and integrations.</p>
+    <div className="p-6 max-w-[1600px] mx-auto" style={{ background: "#F4F6F9", minHeight: "100%" }}>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="page-title flex items-center gap-2">
+            <Settings className="w-5 h-5" style={{ color: "#64748B" }} />
+            Platform Configuration
+          </h1>
+          <p className="page-subtitle">Manage ML thresholds, visual preferences, and integrations.</p>
+        </div>
+        <button className="btn-primary">
+          <Save className="w-3.5 h-3.5" />
+          Save Changes
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <GlassCard className="p-6">
-           <h3 className="text-white font-bold text-sm mb-4 flex items-center gap-2"><Sliders className="w-4 h-4 text-[#A855F7]"/> Risk Thresholds</h3>
-           <div className="space-y-4">
-             <div>
-               <label className="text-xs text-[#94A3B8] block mb-1">Critical Anomaly Cutoff</label>
-               <input type="range" min="0" max="100" defaultValue="72" className="w-full accent-[#A855F7]" />
-               <div className="text-right text-[10px] font-mono text-white mt-1">0.72</div>
-             </div>
-             <div>
-               <label className="text-xs text-[#94A3B8] block mb-1">Monitoring Anomaly Cutoff</label>
-               <input type="range" min="0" max="100" defaultValue="50" className="w-full accent-[#3B82F6]" />
-               <div className="text-right text-[10px] font-mono text-white mt-1">0.50</div>
-             </div>
-           </div>
-        </GlassCard>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Risk Thresholds */}
+        <SurfaceCard className="p-5">
+          <h3 className="font-semibold mb-4 flex items-center gap-2" style={{ fontSize: "13px", color: "#0F172A" }}>
+            <Sliders className="w-4 h-4" style={{ color: "#7C3AED" }} />
+            Risk Thresholds
+          </h3>
+          <div className="space-y-5">
+            <div>
+              <label className="block mb-2" style={{ fontSize: "12px", color: "#64748B", fontWeight: 500 }}>
+                Critical Anomaly Cutoff
+              </label>
+              <input type="range" min="0" max="100" defaultValue="72" className="w-full" style={{ accentColor: "#DC2626" }} />
+              <div className="text-right mt-1" style={{ fontSize: "11px", color: "#334155", fontFamily: "monospace", fontWeight: 600 }}>
+                0.72
+              </div>
+            </div>
+            <div>
+              <label className="block mb-2" style={{ fontSize: "12px", color: "#64748B", fontWeight: 500 }}>
+                Monitoring Anomaly Cutoff
+              </label>
+              <input type="range" min="0" max="100" defaultValue="50" className="w-full" style={{ accentColor: "#1A56DB" }} />
+              <div className="text-right mt-1" style={{ fontSize: "11px", color: "#334155", fontFamily: "monospace", fontWeight: 600 }}>
+                0.50
+              </div>
+            </div>
+          </div>
+        </SurfaceCard>
 
-        <GlassCard className="p-6">
-           <h3 className="text-white font-bold text-sm mb-4 flex items-center gap-2"><HardDrive className="w-4 h-4 text-[#00F5FF]"/> Graph Engine</h3>
-           <div className="space-y-4">
-             <div className="flex items-center justify-between">
-               <label className="text-xs text-[#94A3B8]">Max Render Nodes</label>
-               <span className="text-xs font-mono text-white">5,000</span>
-             </div>
-             <div className="flex items-center justify-between">
-               <label className="text-xs text-[#94A3B8]">Physics Iterations</label>
-               <span className="text-xs font-mono text-white">50</span>
-             </div>
-             <div className="flex items-center justify-between">
-               <label className="text-xs text-[#94A3B8]">Auto-collapse Degrees</label>
-               <span className="text-xs font-mono text-white">&gt; 3</span>
-             </div>
-           </div>
-        </GlassCard>
+        {/* Graph Engine */}
+        <SurfaceCard className="p-5">
+          <h3 className="font-semibold mb-4 flex items-center gap-2" style={{ fontSize: "13px", color: "#0F172A" }}>
+            <HardDrive className="w-4 h-4" style={{ color: "#1A56DB" }} />
+            Graph Engine
+          </h3>
+          <div className="space-y-3">
+            {[
+              { label: "Max Render Nodes", value: "5,000" },
+              { label: "Physics Iterations", value: "50" },
+              { label: "Auto-collapse Degrees", value: "> 3" },
+            ].map(item => (
+              <div key={item.label} className="flex items-center justify-between">
+                <label style={{ fontSize: "12px", color: "#64748B" }}>{item.label}</label>
+                <span style={{ fontSize: "12px", color: "#0F172A", fontFamily: "monospace", fontWeight: 700 }}>
+                  {item.value}
+                </span>
+              </div>
+            ))}
+          </div>
+        </SurfaceCard>
 
-        <GlassCard className="p-6">
-           <h3 className="text-white font-bold text-sm mb-4 flex items-center gap-2"><Bell className="w-4 h-4 text-[#F43F5E]"/> Notifications</h3>
-           <div className="space-y-4">
-             <div className="flex items-center justify-between">
-               <label className="text-xs text-[#94A3B8]">Critical Alert Sound</label>
-               <input type="checkbox" defaultChecked className="accent-[#F43F5E]" />
-             </div>
-             <div className="flex items-center justify-between">
-               <label className="text-xs text-[#94A3B8]">Webhooks (Kafka)</label>
-               <span className="text-[10px] px-2 py-0.5 rounded bg-[#10B981]/10 text-[#10B981] border border-[#10B981]/30">ACTIVE</span>
-             </div>
-           </div>
-        </GlassCard>
+        {/* Notifications */}
+        <SurfaceCard className="p-5">
+          <h3 className="font-semibold mb-4 flex items-center gap-2" style={{ fontSize: "13px", color: "#0F172A" }}>
+            <Bell className="w-4 h-4" style={{ color: "#DC2626" }} />
+            Notifications
+          </h3>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label style={{ fontSize: "12px", color: "#64748B" }}>Critical Alert Sound</label>
+              <input type="checkbox" defaultChecked style={{ accentColor: "#DC2626", width: "16px", height: "16px", cursor: "pointer" }} />
+            </div>
+            <div className="flex items-center justify-between">
+              <label style={{ fontSize: "12px", color: "#64748B" }}>Webhooks (Kafka)</label>
+              <span
+                className="px-2 py-0.5 rounded font-semibold"
+                style={{ fontSize: "11px", background: "#DCFCE7", color: "#15803D", border: "1px solid #BBF7D0" }}
+              >
+                ACTIVE
+              </span>
+            </div>
+          </div>
+        </SurfaceCard>
       </div>
     </div>
   );

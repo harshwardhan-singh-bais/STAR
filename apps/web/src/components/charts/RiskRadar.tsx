@@ -8,7 +8,7 @@ interface RiskRadarProps {
   color?: string;
 }
 
-export function RiskRadar({ data, color = "#F43F5E" }: RiskRadarProps) {
+export function RiskRadar({ data, color = "#1A56DB" }: RiskRadarProps) {
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
   return (
@@ -16,10 +16,10 @@ export function RiskRadar({ data, color = "#F43F5E" }: RiskRadarProps) {
       {mounted && (
       <ResponsiveContainer width="100%" height="100%">
         <RadarChart cx="50%" cy="50%" outerRadius="70%" data={data}>
-          <PolarGrid stroke="rgba(255,255,255,0.1)" />
+          <PolarGrid stroke="#E2E8F0" />
           <PolarAngleAxis 
             dataKey="subject" 
-            tick={{ fill: "#94A3B8", fontSize: 10, fontFamily: "JetBrains Mono" }} 
+            tick={{ fill: "#64748B", fontSize: 10 }} 
           />
           <PolarRadiusAxis 
             angle={30} 

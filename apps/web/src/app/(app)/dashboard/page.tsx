@@ -1,30 +1,59 @@
 "use client";
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { motion, Variants } from "framer-motion";
+import { SurfaceCard } from "@/components/ui/GlassCard";
 import { MetricCard } from "@/components/ui/MetricCard";
 import { TransactionVolumeChart } from "@/components/charts/TransactionVolumeChart";
 import { RiskRadar } from "@/components/charts/RiskRadar";
-import { STAGGER_CONTAINER, STAGGER_ITEM_UP } from "@/animations/variants";
+import { RiskBadge } from "@/components/ui/RiskBadge";
 import { useAMLStore } from "@/store/useAMLStore";
 import { useWebSocketSim } from "@/hooks/useWebSocketSim";
 import { starApi, SystemHealth } from "@/lib/api";
-import { Activity, ShieldAlert, Crosshair, Network, BarChart2 } from "lucide-react";
-import { formatCurrency, getRiskColor } from "@/utils/format";
+import {
+  Activity,
+  ShieldAlert,
+  Crosshair,
+  Network,
+  BarChart2,
+  TrendingUp,
+  ArrowRight,
+  RefreshCw,
+  CheckCircle,
+  AlertTriangle,
+  XCircle,
+  ChevronRight,
+  Clock,
+  FileText,
+} from "lucide-react";
+import { getRiskColor } from "@/utils/format";
+
+const FADE_UP: Variants = {
+  hidden: { opacity: 0, y: 10 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.06, duration: 0.25, ease: "easeOut" },
+  }),
+};
 
 export default function DashboardPage() {
   const { alerts, transactions } = useAMLStore();
   const [healthData, setHealthData] = useState<SystemHealth | null>(null);
   const [metricsData, setMetricsData] = useState<any>(null);
-  
-  // Start websocket simulation when on dashboard
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
   useWebSocketSim();
 
   useEffect(() => {
+    setLastUpdated(new Date());
     const fetchHealth = () => {
-      starApi.getHealth().then(setHealthData).catch(() => {
-        // Silently keep stale data — backend may be reloading
-      });
+      starApi
+        .getHealth()
+        .then((d) => {
+          setHealthData(d);
+          setLastUpdated(new Date());
+        })
+        .catch(() => {});
       starApi.getMetrics().then(setMetricsData).catch(() => {});
     };
     fetchHealth();
@@ -32,8 +61,6 @@ export default function DashboardPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // TODO: Replace with real API calls when backend endpoints are available
-  // Potential endpoints: /analytics/volume, /analytics/risk-vector
   const mockVolumeData = [
     { time: "00:00", volume: 1200, anomaly: 0 },
     { time: "04:00", volume: 900, anomaly: 200 },
@@ -47,167 +74,534 @@ export default function DashboardPage() {
   const mockRadarData = [
     { subject: "Velocity", A: 85, fullMark: 100 },
     { subject: "Structuring", A: 65, fullMark: 100 },
-    { subject: "Network Centrality", A: 92, fullMark: 100 },
+    { subject: "Net. Centrality", A: 92, fullMark: 100 },
     { subject: "Jurisdiction", A: 70, fullMark: 100 },
     { subject: "Mule Pattern", A: 45, fullMark: 100 },
     { subject: "Dormancy", A: 88, fullMark: 100 },
   ];
 
-  return (
-    <div className="p-6 lg:p-10 max-w-[1600px] mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">Command Center</h1>
-        <p className="text-[#94A3B8]">Real-time AML intelligence overview.</p>
-      </div>
+  const formatTime = (d: Date | null) =>
+    d ? d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "--:--:--";
 
+  const serviceIcon = (status: string) => {
+    if (status === "online") return <CheckCircle className="w-3.5 h-3.5" style={{ color: "#16A34A" }} />;
+    if (status === "degraded") return <AlertTriangle className="w-3.5 h-3.5" style={{ color: "#D97706" }} />;
+    return <XCircle className="w-3.5 h-3.5" style={{ color: "#DC2626" }} />;
+  };
+
+  const recentAlerts = alerts.slice(0, 8);
+
+  return (
+    <div
+      className="p-6 max-w-[1600px] mx-auto"
+      style={{ background: "#F4F6F9", minHeight: "100%" }}
+    >
+      {/* ── Page Header ──────────────────────────────────── */}
       <motion.div
-        variants={STAGGER_CONTAINER}
+        custom={0}
+        variants={FADE_UP}
         initial="hidden"
         animate="visible"
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+        className="mb-6 flex items-start justify-between"
       >
-        {/* Top Metrics Row */}
-        <motion.div variants={STAGGER_ITEM_UP}>
-          <MetricCard label="Active Alerts" value={metricsData?.active_alerts ?? 0} icon={ShieldAlert} color="#F43F5E" />
-        </motion.div>
-        <motion.div variants={STAGGER_ITEM_UP}>
-          <MetricCard label="Transactions Analyzed" value={metricsData?.transactions_scored ?? 0} icon={Activity} color="#3B82F6" />
-        </motion.div>
-        <motion.div variants={STAGGER_ITEM_UP}>
-          <MetricCard label="Graph Nodes" value={metricsData?.graph_nodes ?? 0} icon={Network} color="#A855F7" />
-        </motion.div>
-        <motion.div variants={STAGGER_ITEM_UP}>
-          <MetricCard label="Avg Scoring Latency" value={metricsData?.avg_tgnn_latency_ms ?? 0} suffix="ms" icon={Crosshair} color="#10B981" />
-        </motion.div>
-
-        {/* Main Dashboard Area */}
-        <motion.div variants={STAGGER_ITEM_UP} className="col-span-1 md:col-span-2 lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-          
-          {/* Chart 1: Volume */}
-          <GlassCard className="col-span-1 md:col-span-2 p-6 h-[300px] flex flex-col relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-b from-[#00F5FF]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="flex items-center justify-between mb-4 relative z-10">
-              <div className="flex items-center gap-2">
-                <BarChart2 className="w-4 h-4 text-[#00F5FF]" />
-                <h3 className="font-bold text-white text-sm">24h Transaction Volume vs Anomalies</h3>
-              </div>
-              <div className="flex gap-4 text-xs font-mono">
-                <div className="flex items-center gap-1 text-[#00F5FF]"><div className="w-2 h-2 rounded-full bg-[#00F5FF]"/> Baseline</div>
-                <div className="flex items-center gap-1 text-[#F43F5E]"><div className="w-2 h-2 rounded-full bg-[#F43F5E]"/> Anomalous</div>
-              </div>
-            </div>
-            <div className="flex-1 -ml-4 relative z-10">
-              <TransactionVolumeChart data={mockVolumeData} height={200} />
-            </div>
-          </GlassCard>
-
-          {/* Live Feed List */}
-          <GlassCard className="p-4 h-[350px] overflow-hidden flex flex-col border-t-2 border-t-[#3B82F6]">
-            <div className="flex justify-between items-center mb-4 px-2">
-              <h3 className="font-bold text-white text-sm">Live Alert Stream</h3>
-              <span className="flex h-2 w-2 relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#3B82F6] opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#3B82F6]"></span>
-              </span>
-            </div>
-            <div className="flex-1 overflow-y-auto pr-2 space-y-3 scrollbar-hide">
-              {alerts.slice(0, 10).map((alert, i) => (
-                <motion.div 
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                  key={alert.id} 
-                  className="bg-[#0f172a] p-3 rounded-lg border border-white/5 hover:border-white/10 transition-colors flex items-start gap-3 cursor-pointer group"
-                >
-                  <div className="w-1.5 h-full min-h-[40px] rounded-full" style={{ backgroundColor: getRiskColor(alert.severity) }} />
-                  <div className="flex-1">
-                    <div className="flex justify-between items-start mb-1">
-                      <span className="text-xs font-bold text-white truncate max-w-[150px] group-hover:text-[#00F5FF] transition-colors">{alert.type.replace(/_/g, ' ').toUpperCase()}</span>
-                      <span className="text-[10px] text-[#94A3B8] font-mono">{alert.time}</span>
-                    </div>
-                    <div className="flex justify-between items-end">
-                      <span className="text-[10px] text-[#475569] font-mono">{alert.entityCount} entities</span>
-                      <span className="text-xs font-mono font-bold" style={{ color: getRiskColor(alert.severity) }}>{alert.amount}</span>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </GlassCard>
-
-          {/* Radar Chart */}
-          <GlassCard className="p-4 h-[350px] flex flex-col items-center border-t-2 border-t-[#A855F7]">
-            <h3 className="font-bold text-white text-sm mb-2 self-start px-2">Aggregate Risk Vector</h3>
-            <div className="flex-1 w-full max-w-[300px]">
-              <RiskRadar data={mockRadarData} color="#A855F7" />
-            </div>
-          </GlassCard>
-
-        </motion.div>
-
-        {/* Right Sidebar: Quick Actions & Status */}
-        <motion.div variants={STAGGER_ITEM_UP} className="col-span-1 flex flex-col gap-4 mt-4">
-          <GlassCard className="p-5 flex-1 border-l-2 border-l-[#10B981]">
-            <h3 className="font-bold text-white text-sm mb-4 flex items-center justify-between">
-              System Status
-              {healthData && (
-                <span className={`text-[10px] px-2 py-0.5 rounded font-mono ${
-                  healthData.overall === 'healthy' ? 'bg-[#10B981]/20 text-[#10B981]' : 
-                  healthData.overall === 'degraded' ? 'bg-[#FACC15]/20 text-[#FACC15]' : 'bg-[#F43F5E]/20 text-[#F43F5E]'
-                }`}>
-                  {healthData.overall.toUpperCase()}
-                </span>
-              )}
-            </h3>
-            <div className="space-y-4">
-              {healthData ? healthData.services.map((svc) => (
-                <div key={svc.name}>
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="text-[#94A3B8]">{svc.name}</span>
-                    <span className={`font-mono tracking-widest ${
-                      svc.status === 'online' ? 'text-[#10B981]' : 
-                      svc.status === 'degraded' ? 'text-[#FACC15]' : 'text-[#F43F5E]'
-                    }`}>
-                      {svc.status.toUpperCase()}
-                    </span>
-                  </div>
-                  <div className="h-1 bg-white/10 rounded-full overflow-hidden">
-                    <motion.div 
-                      initial={{ width: 0 }}
-                      animate={{ width: svc.status === 'online' ? "100%" : svc.status === 'degraded' ? "50%" : "0%" }}
-                      transition={{ duration: 1 }}
-                      className={`h-full ${
-                        svc.status === 'online' ? 'bg-[#10B981]' : 
-                        svc.status === 'degraded' ? 'bg-[#FACC15]' : 'bg-[#F43F5E]'
-                      }`}
-                    />
-                  </div>
-                  {svc.details && <div className="text-[9px] text-[#475569] mt-1">{svc.details}</div>}
-                </div>
-              )) : (
-                <div className="text-sm text-[#94A3B8]">Loading system status...</div>
-              )}
-            </div>
-
-            <h3 className="font-bold text-white text-sm mt-10 mb-4">Command Actions</h3>
-            <div className="space-y-2">
-              <button className="w-full text-left px-4 py-2.5 rounded-lg border border-white/5 hover:bg-white/10 transition-colors text-xs text-[#E2E8F0] font-medium flex items-center justify-between group">
-                Generate Daily Briefing
-                <Activity className="w-3 h-3 text-[#94A3B8] group-hover:text-white" />
-              </button>
-              <button className="w-full text-left px-4 py-2.5 rounded-lg border border-[#F43F5E]/20 text-[#F43F5E] hover:bg-[#F43F5E]/10 transition-colors text-xs font-medium flex items-center justify-between group">
-                Halt High-Risk Txns
-                <ShieldAlert className="w-3 h-3 text-[#F43F5E] group-hover:text-[#F43F5E]" />
-              </button>
-              <button className="w-full text-left px-4 py-2.5 rounded-lg border border-[#A855F7]/20 text-[#A855F7] hover:bg-[#A855F7]/10 transition-colors text-xs font-medium flex items-center justify-between group">
-                Re-train ML Baseline
-                <Network className="w-3 h-3 text-[#A855F7] group-hover:text-[#A855F7]" />
-              </button>
-            </div>
-          </GlassCard>
-        </motion.div>
-
+        <div>
+          <h1 className="page-title">AML Command Overview</h1>
+          <p className="page-subtitle flex items-center gap-1.5">
+            <Clock className="w-3.5 h-3.5" />
+            Last updated: {formatTime(lastUpdated)}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            className="btn-secondary"
+            onClick={() => window.location.reload()}
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            Refresh
+          </button>
+          <button className="btn-secondary">
+            <FileText className="w-3.5 h-3.5" />
+            Export Report
+          </button>
+        </div>
       </motion.div>
+
+      {/* ── KPI Metric Cards ─────────────────────────────── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {[
+          {
+            label: "Active Alerts",
+            value: metricsData?.active_alerts ?? 0,
+            icon: ShieldAlert,
+            color: "#DC2626",
+            description: "Require immediate review",
+          },
+          {
+            label: "Transactions Analyzed",
+            value: metricsData?.transactions_scored ?? 0,
+            icon: Activity,
+            color: "#1A56DB",
+            description: "Last 24 hours",
+          },
+          {
+            label: "Graph Nodes",
+            value: metricsData?.graph_nodes ?? 0,
+            icon: Network,
+            color: "#7C3AED",
+            description: "Active entity connections",
+          },
+          {
+            label: "Avg Scoring Latency",
+            value: metricsData?.avg_tgnn_latency_ms ?? 0,
+            suffix: "ms",
+            icon: Crosshair,
+            color: "#16A34A",
+            description: "TGNN pipeline",
+          },
+        ].map((card, i) => (
+          <motion.div
+            key={card.label}
+            custom={i + 1}
+            variants={FADE_UP}
+            initial="hidden"
+            animate="visible"
+          >
+            <MetricCard {...card} />
+          </motion.div>
+        ))}
+      </div>
+
+      {/* ── Main Grid ────────────────────────────────────── */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+
+        {/* ── Left column: Charts ──────────────────────── */}
+        <div className="xl:col-span-2 flex flex-col gap-4">
+
+          {/* Transaction Volume Chart */}
+          <motion.div custom={5} variants={FADE_UP} initial="hidden" animate="visible">
+            <SurfaceCard className="p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <BarChart2 className="w-4 h-4" style={{ color: "#1A56DB" }} />
+                  <h2
+                    className="font-semibold"
+                    style={{ fontSize: "14px", color: "#0F172A" }}
+                  >
+                    24h Transaction Volume vs Anomalies
+                  </h2>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className="inline-block rounded-full"
+                      style={{ width: "8px", height: "8px", background: "#1A56DB" }}
+                    />
+                    <span style={{ fontSize: "11px", color: "#64748B" }}>Baseline</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className="inline-block rounded-full"
+                      style={{ width: "8px", height: "8px", background: "#DC2626" }}
+                    />
+                    <span style={{ fontSize: "11px", color: "#64748B" }}>Anomalous</span>
+                  </div>
+                </div>
+              </div>
+              <div style={{ height: "220px" }}>
+                <TransactionVolumeChart data={mockVolumeData} height={220} />
+              </div>
+            </SurfaceCard>
+          </motion.div>
+
+          {/* Alert Queue */}
+          <motion.div custom={6} variants={FADE_UP} initial="hidden" animate="visible">
+            <SurfaceCard className="overflow-hidden">
+              {/* Card header */}
+              <div
+                className="flex items-center justify-between px-5 py-3.5"
+                style={{ borderBottom: "1px solid #F1F5F9" }}
+              >
+                <div className="flex items-center gap-2">
+                  <ShieldAlert className="w-4 h-4" style={{ color: "#DC2626" }} />
+                  <h2
+                    className="font-semibold"
+                    style={{ fontSize: "14px", color: "#0F172A" }}
+                  >
+                    Recent Alerts
+                  </h2>
+                  {recentAlerts.length > 0 && (
+                    <span
+                      className="inline-flex items-center justify-center rounded-full text-white font-bold"
+                      style={{
+                        width: "18px",
+                        height: "18px",
+                        background: "#DC2626",
+                        fontSize: "10px",
+                      }}
+                    >
+                      {recentAlerts.length}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1.5">
+                  {/* Live pulse */}
+                  <span
+                    className="inline-block rounded-full"
+                    style={{
+                      width: "6px",
+                      height: "6px",
+                      background: "#16A34A",
+                      animation: "pulse-dot 2s ease-in-out infinite",
+                    }}
+                  />
+                  <span style={{ fontSize: "11px", color: "#64748B" }}>Live</span>
+                </div>
+              </div>
+
+              {/* Alert rows */}
+              <div className="overflow-hidden">
+                {recentAlerts.length === 0 ? (
+                  <div
+                    className="flex items-center justify-center py-12"
+                    style={{ color: "#94A3B8", fontSize: "13px" }}
+                  >
+                    No active alerts
+                  </div>
+                ) : (
+                  recentAlerts.map((alert, i) => {
+                    const severityKey = String(alert.severity).toLowerCase();
+                    const barColors: Record<string, string> = {
+                      critical: "#DC2626",
+                      high: "#D97706",
+                      medium: "#CA8A04",
+                      low: "#16A34A",
+                    };
+                    const barColor = barColors[severityKey] ?? "#94A3B8";
+
+                    return (
+                      <motion.div
+                        key={alert.id}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.04 }}
+                        className="flex items-center gap-4 px-5 cursor-pointer"
+                        style={{
+                          borderBottom: "1px solid #F8FAFC",
+                          paddingTop: "10px",
+                          paddingBottom: "10px",
+                        }}
+                        onMouseEnter={e => {
+                          (e.currentTarget as HTMLElement).style.background = "#F8FAFC";
+                        }}
+                        onMouseLeave={e => {
+                          (e.currentTarget as HTMLElement).style.background = "transparent";
+                        }}
+                      >
+                        {/* Priority bar */}
+                        <div
+                          style={{
+                            width: "3px",
+                            height: "36px",
+                            borderRadius: "2px",
+                            background: barColor,
+                            flexShrink: 0,
+                          }}
+                        />
+
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2 mb-0.5">
+                            <span
+                              className="font-medium truncate"
+                              style={{ fontSize: "12px", color: "#0F172A" }}
+                            >
+                              {alert.type.replace(/_/g, " ")}
+                            </span>
+                            <span
+                              style={{
+                                fontSize: "11px",
+                                color: "#94A3B8",
+                                flexShrink: 0,
+                                fontVariantNumeric: "tabular-nums",
+                              }}
+                            >
+                              {alert.time}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between gap-2">
+                            <RiskBadge level={alert.severity} />
+                            <span
+                              className="font-semibold"
+                              style={{
+                                fontSize: "12px",
+                                color: "#334155",
+                                fontVariantNumeric: "tabular-nums",
+                              }}
+                            >
+                              {alert.amount}
+                            </span>
+                          </div>
+                        </div>
+
+                        <ChevronRight
+                          className="w-3.5 h-3.5 flex-shrink-0"
+                          style={{ color: "#CBD5E1" }}
+                        />
+                      </motion.div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Footer */}
+              <div
+                className="flex items-center justify-between px-5 py-3"
+                style={{ borderTop: "1px solid #F1F5F9" }}
+              >
+                <span style={{ fontSize: "12px", color: "#94A3B8" }}>
+                  Showing {recentAlerts.length} most recent
+                </span>
+                <a
+                  href="/alerts"
+                  className="flex items-center gap-1 font-medium"
+                  style={{ fontSize: "12px", color: "#1A56DB", textDecoration: "none" }}
+                  onMouseEnter={e => ((e.currentTarget as HTMLElement).style.textDecoration = "underline")}
+                  onMouseLeave={e => ((e.currentTarget as HTMLElement).style.textDecoration = "none")}
+                >
+                  View all alerts <ArrowRight className="w-3 h-3" />
+                </a>
+              </div>
+            </SurfaceCard>
+          </motion.div>
+        </div>
+
+        {/* ── Right column: Radar + System Health + Actions ── */}
+        <div className="flex flex-col gap-4">
+
+          {/* Risk Vector Radar */}
+          <motion.div custom={7} variants={FADE_UP} initial="hidden" animate="visible">
+            <SurfaceCard className="p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <TrendingUp className="w-4 h-4" style={{ color: "#7C3AED" }} />
+                <h2
+                  className="font-semibold"
+                  style={{ fontSize: "14px", color: "#0F172A" }}
+                >
+                  Aggregate Risk Vector
+                </h2>
+              </div>
+              <p style={{ fontSize: "11px", color: "#94A3B8", marginBottom: "8px" }}>
+                Composite ML risk factor scores
+              </p>
+              <div style={{ height: "260px" }}>
+                <RiskRadar data={mockRadarData} color="#7C3AED" />
+              </div>
+            </SurfaceCard>
+          </motion.div>
+
+          {/* System Health */}
+          <motion.div custom={8} variants={FADE_UP} initial="hidden" animate="visible">
+            <SurfaceCard className="p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h2
+                  className="font-semibold"
+                  style={{ fontSize: "14px", color: "#0F172A" }}
+                >
+                  System Health
+                </h2>
+                {healthData && (
+                  <span
+                    className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded font-semibold"
+                    style={{
+                      fontSize: "11px",
+                      background:
+                        healthData.overall === "healthy"
+                          ? "#DCFCE7"
+                          : healthData.overall === "degraded"
+                          ? "#FEF3C7"
+                          : "#FEE2E2",
+                      color:
+                        healthData.overall === "healthy"
+                          ? "#15803D"
+                          : healthData.overall === "degraded"
+                          ? "#92400E"
+                          : "#DC2626",
+                      border: `1px solid ${
+                        healthData.overall === "healthy"
+                          ? "#BBF7D0"
+                          : healthData.overall === "degraded"
+                          ? "#FDE68A"
+                          : "#FECACA"
+                      }`,
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: "5px",
+                        height: "5px",
+                        borderRadius: "50%",
+                        background: "currentColor",
+                        display: "inline-block",
+                      }}
+                    />
+                    {healthData.overall.toUpperCase()}
+                  </span>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                {healthData ? (
+                  healthData.services.map((svc) => (
+                    <div key={svc.name}>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <div className="flex items-center gap-2">
+                          {serviceIcon(svc.status)}
+                          <span style={{ fontSize: "12px", color: "#334155", fontWeight: 500 }}>
+                            {svc.name}
+                          </span>
+                        </div>
+                        <span
+                          style={{
+                            fontSize: "11px",
+                            fontWeight: 600,
+                            color:
+                              svc.status === "online"
+                                ? "#16A34A"
+                                : svc.status === "degraded"
+                                ? "#D97706"
+                                : "#DC2626",
+                          }}
+                        >
+                          {svc.status === "online"
+                            ? "Online"
+                            : svc.status === "degraded"
+                            ? "Degraded"
+                            : "Offline"}
+                        </span>
+                      </div>
+
+                      {/* Progress bar */}
+                      <div
+                        className="rounded-full overflow-hidden"
+                        style={{ height: "4px", background: "#F1F5F9" }}
+                      >
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{
+                            width:
+                              svc.status === "online"
+                                ? "100%"
+                                : svc.status === "degraded"
+                                ? "55%"
+                                : "0%",
+                          }}
+                          transition={{ duration: 0.8, ease: "easeOut" }}
+                          className="h-full rounded-full"
+                          style={{
+                            background:
+                              svc.status === "online"
+                                ? "#16A34A"
+                                : svc.status === "degraded"
+                                ? "#D97706"
+                                : "#DC2626",
+                          }}
+                        />
+                      </div>
+
+                      {svc.details && (
+                        <p style={{ fontSize: "10px", color: "#94A3B8", marginTop: "2px" }}>
+                          {svc.details}
+                        </p>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div style={{ fontSize: "13px", color: "#94A3B8", textAlign: "center", padding: "16px 0" }}>
+                    Fetching system status...
+                  </div>
+                )}
+              </div>
+            </SurfaceCard>
+          </motion.div>
+
+          {/* Quick Actions */}
+          <motion.div custom={9} variants={FADE_UP} initial="hidden" animate="visible">
+            <SurfaceCard className="p-5">
+              <h2
+                className="font-semibold mb-3"
+                style={{ fontSize: "14px", color: "#0F172A" }}
+              >
+                Quick Actions
+              </h2>
+              <div className="flex flex-col gap-2">
+                <button
+                  className="w-full flex items-center justify-between px-3 py-2.5 rounded-md transition-colors text-left"
+                  style={{
+                    border: "1px solid #E2E8F0",
+                    background: "#FFFFFF",
+                    color: "#334155",
+                    fontSize: "13px",
+                    fontWeight: 500,
+                  }}
+                  onMouseEnter={e => {
+                    (e.currentTarget as HTMLElement).style.background = "#F8FAFC";
+                    (e.currentTarget as HTMLElement).style.borderColor = "#CBD5E1";
+                  }}
+                  onMouseLeave={e => {
+                    (e.currentTarget as HTMLElement).style.background = "#FFFFFF";
+                    (e.currentTarget as HTMLElement).style.borderColor = "#E2E8F0";
+                  }}
+                >
+                  Generate Daily Briefing
+                  <FileText className="w-3.5 h-3.5" style={{ color: "#94A3B8" }} />
+                </button>
+
+                <button
+                  className="w-full flex items-center justify-between px-3 py-2.5 rounded-md transition-colors text-left"
+                  style={{
+                    border: "1px solid #FECACA",
+                    background: "#FEF2F2",
+                    color: "#DC2626",
+                    fontSize: "13px",
+                    fontWeight: 500,
+                  }}
+                  onMouseEnter={e => {
+                    (e.currentTarget as HTMLElement).style.background = "#FEE2E2";
+                  }}
+                  onMouseLeave={e => {
+                    (e.currentTarget as HTMLElement).style.background = "#FEF2F2";
+                  }}
+                >
+                  Halt High-Risk Transactions
+                  <ShieldAlert className="w-3.5 h-3.5" />
+                </button>
+
+                <button
+                  className="w-full flex items-center justify-between px-3 py-2.5 rounded-md transition-colors text-left"
+                  style={{
+                    border: "1px solid #E2E8F0",
+                    background: "#FFFFFF",
+                    color: "#334155",
+                    fontSize: "13px",
+                    fontWeight: 500,
+                  }}
+                  onMouseEnter={e => {
+                    (e.currentTarget as HTMLElement).style.background = "#F8FAFC";
+                    (e.currentTarget as HTMLElement).style.borderColor = "#CBD5E1";
+                  }}
+                  onMouseLeave={e => {
+                    (e.currentTarget as HTMLElement).style.background = "#FFFFFF";
+                    (e.currentTarget as HTMLElement).style.borderColor = "#E2E8F0";
+                  }}
+                >
+                  Re-train ML Baseline
+                  <Network className="w-3.5 h-3.5" style={{ color: "#94A3B8" }} />
+                </button>
+              </div>
+            </SurfaceCard>
+          </motion.div>
+        </div>
+      </div>
     </div>
   );
 }
