@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, Variants } from "framer-motion";
+import { ExportReportModal } from "@/components/ui/ExportReportModal";
 import { SurfaceCard } from "@/components/ui/GlassCard";
 import { useAMLStore } from "@/store/useAMLStore";
 import { starApi } from "@/lib/api";
@@ -26,6 +27,7 @@ export default function AlertsPage() {
   const [severityFilter, setSeverityFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [sortField, setSortField] = useState<"id" | "time" | "amount">("time");
 
   useEffect(() => {
@@ -83,7 +85,7 @@ export default function AlertsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button className="btn-secondary">
+          <button className="btn-secondary" onClick={() => setIsExportModalOpen(true)}>
             <Download className="w-3.5 h-3.5" />
             Export
           </button>
@@ -371,6 +373,16 @@ export default function AlertsPage() {
           </div>
         </SurfaceCard>
       </motion.div>
+      <ExportReportModal 
+        isOpen={isExportModalOpen} 
+        onClose={() => setIsExportModalOpen(false)} 
+        metrics={{
+          activeAlerts: openCount,
+          analyzed: 42050, // mock fallback
+          nodes: 18453,    // mock fallback
+          latency: 42      // mock fallback
+        }} 
+      />
     </div>
   );
 }

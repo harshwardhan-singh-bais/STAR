@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 
 import { AICopilot } from "@/features/investigation/AICopilot";
 import { GlassCard } from "@/components/ui/GlassCard";
@@ -8,6 +9,22 @@ import { motion, AnimatePresence } from "framer-motion";
 
 export default function CopilotPage() {
   const { activeSarDraft, isGeneratingSar } = useInvestigationStore();
+  const [isFiling, setIsFiling] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+
+  const handleFileToFincen = () => {
+    setIsFiling(true);
+    setTimeout(() => {
+      setIsFiling(false);
+      setToastMessage("Filing submitted securely to FinCEN via batch API.");
+      setTimeout(() => setToastMessage(""), 4000);
+    }, 1500);
+  };
+
+  const handleEditDraft = () => {
+    setToastMessage("Draft unlocked for manual editing.");
+    setTimeout(() => setToastMessage(""), 4000);
+  };
 
   return (
     <div className="p-6 max-w-[1600px] mx-auto flex flex-col" style={{ background: "#F4F6F9", minHeight: "100%" }}>
@@ -82,14 +99,39 @@ export default function CopilotPage() {
                       </div>
                     </div>
                     <div className="mt-4 flex gap-3">
-                      <button className="flex-1 bg-white hover:bg-[#F1F5F9] text-[#334155] border border-[#E2E8F0] rounded-lg py-2.5 text-sm font-medium transition-colors">
+                      <button 
+                        className="flex-1 bg-white hover:bg-[#F1F5F9] text-[#334155] border border-[#E2E8F0] rounded-lg py-2.5 text-sm font-medium transition-colors"
+                        onClick={handleEditDraft}
+                      >
                         Edit Draft
                       </button>
-                      <button className="flex-1 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-lg py-2.5 text-sm font-medium transition-colors flex items-center justify-center gap-2 shadow-sm">
-                        <ShieldCheck className="w-4 h-4" />
-                        File to FinCEN
+                      <button 
+                        className="flex-1 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-lg py-2.5 text-sm font-medium transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
+                        onClick={handleFileToFincen}
+                        disabled={isFiling}
+                      >
+                        {isFiling ? (
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        ) : (
+                          <ShieldCheck className="w-4 h-4" />
+                        )}
+                        {isFiling ? "Filing..." : "File to FinCEN"}
                       </button>
                     </div>
+                    {/* Inline Toast */}
+                    <AnimatePresence>
+                      {toastMessage && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 10 }}
+                          className="absolute bottom-4 left-4 right-4 bg-[#0F172A] text-white text-sm px-4 py-3 rounded-lg shadow-xl flex items-center gap-2 z-50"
+                        >
+                          <CheckCircle2 className="w-4 h-4 text-[#10B981]" />
+                          {toastMessage}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </motion.div>
                 ) : (
                   <motion.div

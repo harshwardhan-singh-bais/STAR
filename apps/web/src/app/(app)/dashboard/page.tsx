@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { ExportReportModal } from "@/components/ui/ExportReportModal";
 import { motion, Variants } from "framer-motion";
 import { SurfaceCard } from "@/components/ui/GlassCard";
 import { MetricCard } from "@/components/ui/MetricCard";
@@ -41,6 +43,7 @@ export default function DashboardPage() {
   const [healthData, setHealthData] = useState<SystemHealth | null>(null);
   const [metricsData, setMetricsData] = useState<any>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
   useWebSocketSim();
 
@@ -119,7 +122,7 @@ export default function DashboardPage() {
             <RefreshCw className="w-3.5 h-3.5" />
             Refresh
           </button>
-          <button className="btn-secondary">
+          <button className="btn-secondary" onClick={() => setIsExportModalOpen(true)}>
             <FileText className="w-3.5 h-3.5" />
             Export Report
           </button>
@@ -135,6 +138,7 @@ export default function DashboardPage() {
             icon: ShieldAlert,
             color: "#DC2626",
             description: "Require immediate review",
+            href: "/alerts"
           },
           {
             label: "Transactions Analyzed",
@@ -142,6 +146,7 @@ export default function DashboardPage() {
             icon: Activity,
             color: "#1A56DB",
             description: "Last 24 hours",
+            href: "/temporal"
           },
           {
             label: "Graph Nodes",
@@ -149,6 +154,7 @@ export default function DashboardPage() {
             icon: Network,
             color: "#7C3AED",
             description: "Active entity connections",
+            href: "/tgnn"
           },
           {
             label: "Avg Scoring Latency",
@@ -157,6 +163,7 @@ export default function DashboardPage() {
             icon: Crosshair,
             color: "#16A34A",
             description: "TGNN pipeline",
+            href: null
           },
         ].map((card, i) => (
           <motion.div
@@ -166,7 +173,13 @@ export default function DashboardPage() {
             initial="hidden"
             animate="visible"
           >
-            <MetricCard {...card} />
+            {card.href ? (
+              <Link href={card.href} className="block transition-transform hover:-translate-y-1">
+                <MetricCard {...card} />
+              </Link>
+            ) : (
+              <MetricCard {...card} />
+            )}
           </motion.div>
         ))}
       </div>
@@ -279,75 +292,76 @@ export default function DashboardPage() {
                     const barColor = barColors[severityKey] ?? "#94A3B8";
 
                     return (
-                      <motion.div
-                        key={alert.id}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: i * 0.04 }}
-                        className="flex items-center gap-4 px-5 cursor-pointer"
-                        style={{
-                          borderBottom: "1px solid #F8FAFC",
-                          paddingTop: "10px",
-                          paddingBottom: "10px",
-                        }}
-                        onMouseEnter={e => {
-                          (e.currentTarget as HTMLElement).style.background = "#F8FAFC";
-                        }}
-                        onMouseLeave={e => {
-                          (e.currentTarget as HTMLElement).style.background = "transparent";
-                        }}
-                      >
-                        {/* Priority bar */}
-                        <div
+                      <Link key={alert.id} href="/alerts" className="block">
+                        <motion.div
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: i * 0.04 }}
+                          className="flex items-center gap-4 px-5 cursor-pointer"
                           style={{
-                            width: "3px",
-                            height: "36px",
-                            borderRadius: "2px",
-                            background: barColor,
-                            flexShrink: 0,
+                            borderBottom: "1px solid #F8FAFC",
+                            paddingTop: "10px",
+                            paddingBottom: "10px",
                           }}
-                        />
+                          onMouseEnter={e => {
+                            (e.currentTarget as HTMLElement).style.background = "#F8FAFC";
+                          }}
+                          onMouseLeave={e => {
+                            (e.currentTarget as HTMLElement).style.background = "transparent";
+                          }}
+                        >
+                          {/* Priority bar */}
+                          <div
+                            style={{
+                              width: "3px",
+                              height: "36px",
+                              borderRadius: "2px",
+                              background: barColor,
+                              flexShrink: 0,
+                            }}
+                          />
 
-                        {/* Content */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2 mb-0.5">
-                            <span
-                              className="font-medium truncate"
-                              style={{ fontSize: "12px", color: "#0F172A" }}
-                            >
-                              {alert.type.replace(/_/g, " ")}
-                            </span>
-                            <span
-                              style={{
-                                fontSize: "11px",
-                                color: "#94A3B8",
-                                flexShrink: 0,
-                                fontVariantNumeric: "tabular-nums",
-                              }}
-                            >
-                              {alert.time}
-                            </span>
+                          {/* Content */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2 mb-0.5">
+                              <span
+                                className="font-medium truncate"
+                                style={{ fontSize: "12px", color: "#0F172A" }}
+                              >
+                                {alert.type.replace(/_/g, " ")}
+                              </span>
+                              <span
+                                style={{
+                                  fontSize: "11px",
+                                  color: "#94A3B8",
+                                  flexShrink: 0,
+                                  fontVariantNumeric: "tabular-nums",
+                                }}
+                              >
+                                {alert.time}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between gap-2">
+                              <RiskBadge level={alert.severity} />
+                              <span
+                                className="font-semibold"
+                                style={{
+                                  fontSize: "12px",
+                                  color: "#334155",
+                                  fontVariantNumeric: "tabular-nums",
+                                }}
+                              >
+                                {alert.amount}
+                              </span>
+                            </div>
                           </div>
-                          <div className="flex items-center justify-between gap-2">
-                            <RiskBadge level={alert.severity} />
-                            <span
-                              className="font-semibold"
-                              style={{
-                                fontSize: "12px",
-                                color: "#334155",
-                                fontVariantNumeric: "tabular-nums",
-                              }}
-                            >
-                              {alert.amount}
-                            </span>
-                          </div>
-                        </div>
 
-                        <ChevronRight
-                          className="w-3.5 h-3.5 flex-shrink-0"
-                          style={{ color: "#CBD5E1" }}
-                        />
-                      </motion.div>
+                          <ChevronRight
+                            className="w-3.5 h-3.5 flex-shrink-0"
+                            style={{ color: "#CBD5E1" }}
+                          />
+                        </motion.div>
+                      </Link>
                     );
                   })
                 )}
@@ -602,6 +616,16 @@ export default function DashboardPage() {
           </motion.div>
         </div>
       </div>
+      <ExportReportModal 
+        isOpen={isExportModalOpen} 
+        onClose={() => setIsExportModalOpen(false)} 
+        metrics={{
+          activeAlerts: metricsData?.active_alerts ?? 0,
+          analyzed: metricsData?.transactions_scored ?? 0,
+          nodes: metricsData?.graph_nodes ?? 0,
+          latency: metricsData?.avg_tgnn_latency_ms ?? 0
+        }} 
+      />
     </div>
   );
 }
