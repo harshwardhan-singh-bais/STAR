@@ -7,7 +7,15 @@ from typing import Any, Dict, Optional, Sequence, Union
 import torch
 from torch_geometric.data import Data
 
-from models import GATe
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from .models import GATe
+else:
+    import importlib
+    try:
+        GATe = importlib.import_module("models").GATe
+    except ImportError:
+        from .models import GATe
 
 
 @dataclass

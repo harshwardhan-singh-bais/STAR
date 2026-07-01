@@ -36,11 +36,11 @@ def create_app() -> FastAPI:
         try:
             isolation_forest_service.load()
             if isolation_forest_service.is_loaded:
-                logger.info("  └── ✅ Isolation Forest loaded (Threshold: %s)", isolation_forest_service.get_threshold())
+                logger.info("  └── SUCCESS: Isolation Forest trained weights loaded (Threshold: %s)", isolation_forest_service.get_threshold())
             else:
-                logger.warning("  └── ⚠️ Isolation Forest not loaded; operating in degraded mode")
+                logger.warning("  └── FAILURE: Isolation Forest trained weights not loaded; operating in degraded mode")
         except Exception as e:
-            logger.error("  └── ❌ FAILURE: Isolation Forest load raised exception: %s", e)
+            logger.error("  └── FAILURE: Isolation Forest load raised exception: %s", e)
 
         # 2. Load TGNN Inference (GATe + RuleEngine + Demo Scenario)
         logger.info("[2/5] Loading TGNN Inference Engine (GATe + RuleEngine + Neo4j pipeline)...")
@@ -49,11 +49,11 @@ def create_app() -> FastAPI:
             inference_service.load()
             if inference_service.is_loaded:
                 n_tx = len(inference_service.SCENARIO["transactions"]) if inference_service.SCENARIO else 0
-                logger.info("  └── ✅ Inference Engine loaded (%d transactions precomputed)", n_tx)
+                logger.info("  └── SUCCESS: TGNN Inference Engine trained weights loaded (%d transactions precomputed)", n_tx)
             else:
-                logger.warning("  └── ⚠️ Inference Engine not loaded; torch/torch_geometric may not be installed")
+                logger.warning("  └── FAILURE: TGNN Inference Engine trained weights not loaded; torch/torch_geometric may not be installed")
         except Exception as e:
-            logger.error("  └── ❌ FAILURE: Inference Engine load raised exception: %s", e)
+            logger.error("  └── FAILURE: Inference Engine load raised exception: %s", e)
 
         # 3. Connect Neo4j
         logger.info("[3/5] Connecting to Graph Store (Neo4j/NetworkX)...")
@@ -129,6 +129,7 @@ def create_app() -> FastAPI:
     from app.api.routes.copilot import router as copilot_router
     from app.api.routes.system import router as system_router
     from app.api.routes.inference import router as inference_router
+    from app.api.routes.input_analysis import router as input_router
     from app.api.websocket_route import router as ws_router
     from app.api.inference_ws import router as inference_ws_router
 
@@ -138,6 +139,7 @@ def create_app() -> FastAPI:
     app.include_router(copilot_router)
     app.include_router(system_router)
     app.include_router(inference_router)
+    app.include_router(input_router)
     app.include_router(ws_router)
     app.include_router(inference_ws_router)
 
