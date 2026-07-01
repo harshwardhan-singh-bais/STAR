@@ -16,6 +16,7 @@ import {
   Settings,
   Shield,
   Brain,
+  FlaskConical,
   ChevronRight,
   Menu,
   X,
@@ -47,6 +48,7 @@ const NAV_GROUPS = [
     items: [
       { label: "Analytics", href: "/temporal", icon: Clock },
       { label: "Graph Network", href: "/tgnn", icon: Brain },
+      { label: "Scenario Lab", href: "/input", icon: FlaskConical },
       { label: "AI Copilot", href: "/copilot", icon: Bot },
     ],
   },
