@@ -6,7 +6,6 @@ import { motion, Variants } from "framer-motion";
 import { SurfaceCard } from "@/components/ui/GlassCard";
 import { MetricCard } from "@/components/ui/MetricCard";
 import { TransactionVolumeChart } from "@/components/charts/TransactionVolumeChart";
-import { RiskRadar } from "@/components/charts/RiskRadar";
 import { RiskBadge } from "@/components/ui/RiskBadge";
 import { useAMLStore } from "@/store/useAMLStore";
 import { useWebSocketSim } from "@/hooks/useWebSocketSim";
@@ -55,15 +54,6 @@ export default function DashboardPage() {
     { time: "24:00", volume: 1500, anomaly: 0 },
   ]);
 
-  const [radarData, setRadarData] = useState([
-    { subject: "Velocity", A: 85, fullMark: 100 },
-    { subject: "Structuring", A: 65, fullMark: 100 },
-    { subject: "Net. Centrality", A: 92, fullMark: 100 },
-    { subject: "Jurisdiction", A: 70, fullMark: 100 },
-    { subject: "Mule Pattern", A: 45, fullMark: 100 },
-    { subject: "Dormancy", A: 88, fullMark: 100 },
-  ]);
-
   useWebSocketSim();
 
   useEffect(() => {
@@ -102,21 +92,6 @@ export default function DashboardPage() {
         anomaly: anomalyCount
       }];
     });
-
-    // Make the radar chart breathe with the system load more dynamically
-    setRadarData(prev => prev.map((item, i) => {
-      const activity = (metricsData.transactions_scored || 0) + (metricsData.active_alerts || 0) * 10;
-      const noise = (Math.random() - 0.5) * 15; // random jitter up to +/- 7.5
-      
-      // Calculate a target score that floats dynamically based on activity
-      const base = 50 + (activity % 40); 
-      const newScore = (item.A * 0.7) + (base * 0.3) + noise;
-      
-      return {
-        ...item,
-        A: Math.min(100, Math.max(0, newScore))
-      };
-    }));
   }, [metricsData]);
 
   const formatTime = (d: Date | null) =>
@@ -428,26 +403,6 @@ export default function DashboardPage() {
         {/* ── Right column: Radar + System Health + Actions ── */}
         <div className="flex flex-col gap-4">
 
-          {/* Risk Vector Radar */}
-          <motion.div custom={7} variants={FADE_UP} initial="hidden" animate="visible">
-            <SurfaceCard className="p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <TrendingUp className="w-4 h-4" style={{ color: "#7C3AED" }} />
-                <h2
-                  className="font-semibold"
-                  style={{ fontSize: "14px", color: "#0F172A" }}
-                >
-                  Aggregate Risk Vector
-                </h2>
-              </div>
-              <p style={{ fontSize: "12px", color: "#64748B", marginBottom: "16px" }}>
-                Composite ML risk factor scores
-              </p>
-              <div style={{ height: "260px" }}>
-                <RiskRadar data={radarData} color="#7C3AED" />
-              </div>
-            </SurfaceCard>
-          </motion.div>
 
           {/* System Health */}
           <motion.div custom={8} variants={FADE_UP} initial="hidden" animate="visible">
@@ -574,82 +529,7 @@ export default function DashboardPage() {
             </SurfaceCard>
           </motion.div>
 
-          {/* Quick Actions */}
-          <motion.div custom={9} variants={FADE_UP} initial="hidden" animate="visible">
-            <SurfaceCard className="p-5">
-              <h2
-                className="font-semibold mb-3"
-                style={{ fontSize: "14px", color: "#0F172A" }}
-              >
-                Quick Actions
-              </h2>
-              <div className="flex flex-col gap-2">
-                <button
-                  className="w-full flex items-center justify-between px-3 py-2.5 rounded-md transition-colors text-left"
-                  style={{
-                    border: "1px solid #E2E8F0",
-                    background: "#FFFFFF",
-                    color: "#334155",
-                    fontSize: "13px",
-                    fontWeight: 500,
-                  }}
-                  onMouseEnter={e => {
-                    (e.currentTarget as HTMLElement).style.background = "#F8FAFC";
-                    (e.currentTarget as HTMLElement).style.borderColor = "#CBD5E1";
-                  }}
-                  onMouseLeave={e => {
-                    (e.currentTarget as HTMLElement).style.background = "#FFFFFF";
-                    (e.currentTarget as HTMLElement).style.borderColor = "#E2E8F0";
-                  }}
-                >
-                  Generate Daily Briefing
-                  <FileText className="w-3.5 h-3.5" style={{ color: "#94A3B8" }} />
-                </button>
 
-                <button
-                  className="w-full flex items-center justify-between px-3 py-2.5 rounded-md transition-colors text-left"
-                  style={{
-                    border: "1px solid #FECACA",
-                    background: "#FEF2F2",
-                    color: "#DC2626",
-                    fontSize: "13px",
-                    fontWeight: 500,
-                  }}
-                  onMouseEnter={e => {
-                    (e.currentTarget as HTMLElement).style.background = "#FEE2E2";
-                  }}
-                  onMouseLeave={e => {
-                    (e.currentTarget as HTMLElement).style.background = "#FEF2F2";
-                  }}
-                >
-                  Halt High-Risk Transactions
-                  <ShieldAlert className="w-3.5 h-3.5" />
-                </button>
-
-                <button
-                  className="w-full flex items-center justify-between px-3 py-2.5 rounded-md transition-colors text-left"
-                  style={{
-                    border: "1px solid #E2E8F0",
-                    background: "#FFFFFF",
-                    color: "#334155",
-                    fontSize: "13px",
-                    fontWeight: 500,
-                  }}
-                  onMouseEnter={e => {
-                    (e.currentTarget as HTMLElement).style.background = "#F8FAFC";
-                    (e.currentTarget as HTMLElement).style.borderColor = "#CBD5E1";
-                  }}
-                  onMouseLeave={e => {
-                    (e.currentTarget as HTMLElement).style.background = "#FFFFFF";
-                    (e.currentTarget as HTMLElement).style.borderColor = "#E2E8F0";
-                  }}
-                >
-                  Re-train ML Baseline
-                  <Network className="w-3.5 h-3.5" style={{ color: "#94A3B8" }} />
-                </button>
-              </div>
-            </SurfaceCard>
-          </motion.div>
         </div>
       </div>
       <ExportReportModal 

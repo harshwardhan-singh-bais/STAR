@@ -62,10 +62,52 @@ export const useAMLStore = create<AMLState>((set) => ({
   addAlert: (alert) => set((state) => ({
     alerts: [alert, ...state.alerts.slice(0, 19)],
   })),
-  addTransaction: (tx) => set((state) => ({
-    transactions: [tx, ...state.transactions.slice(0, 49)],
-    streamCount: state.streamCount + 1,
-  })),
+  addTransaction: (tx) => set((state) => {
+    const newEdges = [...state.graphEdges];
+    const newNodes = [...state.graphNodes];
+
+    if (!newNodes.find(n => n.id === tx.from)) {
+      newNodes.push({
+        id: tx.from,
+        name: tx.from,
+        risk: tx.anomalyScore * 100,
+        anomalyScore: tx.anomalyScore,
+        riskLevel: tx.risk === "critical" ? "critical" : tx.risk === "high" ? "high" : "normal",
+        community: Math.floor(Math.random() * 3),
+        type: "personal",
+        flagged: tx.risk === "critical"
+      });
+    }
+
+    if (!newNodes.find(n => n.id === tx.to)) {
+      newNodes.push({
+        id: tx.to,
+        name: tx.to,
+        risk: tx.anomalyScore * 100,
+        anomalyScore: tx.anomalyScore,
+        riskLevel: tx.risk === "critical" ? "critical" : tx.risk === "high" ? "high" : "normal",
+        community: Math.floor(Math.random() * 3),
+        type: "business",
+        flagged: tx.risk === "critical"
+      });
+    }
+
+    newEdges.push({
+      source: tx.from,
+      target: tx.to,
+      amount: tx.amount,
+      suspicious: tx.risk === "critical" || tx.risk === "high",
+      type: tx.type,
+      weight: Math.log(tx.amount || 1)
+    });
+
+    return {
+      transactions: [tx, ...state.transactions.slice(0, 49)],
+      streamCount: state.streamCount + 1,
+      graphNodes: newNodes.length > 200 ? newNodes.slice(newNodes.length - 200) : newNodes,
+      graphEdges: newEdges.length > 300 ? newEdges.slice(newEdges.length - 300) : newEdges
+    };
+  }),
   selectNode: (id) => set({ selectedNodeId: id }),
   selectAlert: (id) => set({ selectedAlertId: id }),
   setSelectedPath: (path) => set({ selectedPath: path }),

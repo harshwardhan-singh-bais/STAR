@@ -3,7 +3,7 @@
 import { motion, useInView } from "framer-motion";
 import { useRef, useEffect, useState, useCallback } from "react";
 import { GitBranch, Search, Maximize2, Radar, Network } from "lucide-react";
-import { GRAPH_NODES, GRAPH_LINKS, COLORS } from "@/lib/constants";
+import { useAMLStore } from "@/store/useAMLStore";
 
 function InteractiveGraph() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -11,6 +11,8 @@ function InteractiveGraph() {
   const timeRef = useRef(0);
   const [selectedPath, setSelectedPath] = useState<number>(0);
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
+  
+  const { graphNodes, graphEdges } = useAMLStore();
 
   const paths = [
     ["ACC-4521", "ACC-7833", "ACC-9877", "ACC-5590", "ACC-4521"], // circular
@@ -48,12 +50,18 @@ function InteractiveGraph() {
 
     ctx.clearRect(0, 0, w, h);
 
-    // Node positions
+    // Node positions (using an expanding spiral or force layout fallback for demo purposes)
     const nodePositions: Record<string, { x: number; y: number }> = {};
-    GRAPH_NODES.forEach((n) => {
+    graphNodes.forEach((n, idx) => {
+      // Create a pseudo-random stable position based on index if x/y aren't provided
+      const angle = idx * 137.5 * (Math.PI / 180);
+      const radius = 20 + Math.sqrt(idx) * 15;
+      const nx = n.x !== undefined ? n.x : Math.cos(angle) * radius;
+      const ny = n.y !== undefined ? n.y : Math.sin(angle) * radius;
+      
       nodePositions[n.id] = {
-        x: cx + n.x * scale,
-        y: cy + n.y * scale,
+        x: cx + nx * scale,
+        y: cy + ny * scale,
       };
     });
 
@@ -61,7 +69,7 @@ function InteractiveGraph() {
     const isCircular = selectedPath === 0;
 
     // Draw links
-    GRAPH_LINKS.forEach((link) => {
+    graphEdges.forEach((link) => {
       const src = nodePositions[link.source];
       const tgt = nodePositions[link.target];
       if (!src || !tgt) return;
@@ -132,71 +140,67 @@ function InteractiveGraph() {
     });
 
     // Draw nodes
-    GRAPH_NODES.forEach((node) => {
+    graphNodes.forEach((node) => {
       const pos = nodePositions[node.id];
       if (!pos) return;
 
       const isInPath = currentPath.includes(node.id);
-      const pulse = Math.sin(time * 2 + node.risk * 0.05) * 0.2 + 0.9;
+      const pulse = isInPath ? 1 + Math.sin(time * 3) * 0.15 : 1;
+      
+      // Dynamic base radius mapping
       const baseRadius = isInPath ? 10 : 4 + (node.risk / 100) * 5;
       const radius = baseRadius * pulse;
 
-      const communityColors = ["#F43F5E", "#00F5FF", "#10B981"];
-      const nodeColor = isInPath ? "#F43F5E" : communityColors[node.community] || "#94A3B8";
+      const communityColors = ["#F43F5E", "#00F5FF", "#10B981", "#EAB308", "#A855F7"];
+      const nodeColor = isInPath ? "#F43F5E" : communityColors[node.community % communityColors.length] || "#94A3B8";
 
       // Glow halo
-      if (node.risk > 60 || isInPath) {
-        const glowRadius = radius * (isInPath ? 5 : 3.5);
-        const grad = ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, glowRadius);
-        grad.addColorStop(0, `${nodeColor}${isInPath ? "30" : "15"}`);
-        grad.addColorStop(0.5, `${nodeColor}08`);
-        grad.addColorStop(1, "transparent");
-        ctx.fillStyle = grad;
-        ctx.fillRect(pos.x - glowRadius, pos.y - glowRadius, glowRadius * 2, glowRadius * 2);
-      }
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, radius * 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = isInPath
+        ? `rgba(244, 63, 94, ${0.15 * pulse})`
+        : `rgba(${node.community === 0 ? '0,245,255' : node.community === 1 ? '59,130,246' : '16,185,129'}, ${0.08 * pulse})`;
+      ctx.fill();
 
-      // Node circle
+      // Node body
       ctx.beginPath();
       ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
       ctx.fillStyle = isInPath
         ? `rgba(244, 63, 94, ${0.85 * pulse})`
-        : node.community === 0
-        ? `rgba(0, 245, 255, ${0.7 * pulse})`
-        : node.community === 1
-        ? `rgba(59, 130, 246, ${0.6 * pulse})`
-        : `rgba(16, 185, 129, ${0.5 * pulse})`;
+        : nodeColor;
 
-      if (isInPath) {
-        ctx.shadowColor = "#F43F5E";
-        ctx.shadowBlur = 20;
+      if (isInPath || node.flagged) {
+        ctx.shadowColor = nodeColor;
+        ctx.shadowBlur = isInPath ? 20 : 10;
       }
       ctx.fill();
       ctx.shadowBlur = 0;
 
-      // Node border
-      if (isInPath) {
-        ctx.beginPath();
-        ctx.arc(pos.x, pos.y, radius + 2, 0, Math.PI * 2);
-        ctx.strokeStyle = "rgba(244, 63, 94, 0.4)";
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-      }
+      // Inner dot
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, radius * 0.4, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+      ctx.fill();
 
       // Label
       if (radius > 6 || isInPath) {
         ctx.font = `${isInPath ? "bold " : ""}${isInPath ? 11 : 9}px "JetBrains Mono", monospace`;
         ctx.fillStyle = isInPath ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.45)";
         ctx.textAlign = "center";
-        ctx.fillText(node.name, pos.x, pos.y + radius + 14);
+        ctx.fillText(node.name || node.id, pos.x, pos.y + radius + 14);
       }
     });
-
-    animRef.current = requestAnimationFrame(draw);
-  }, [selectedPath, paths]);
+    // Removed recursive requestAnimationFrame from here to fix lint error
+  }, [selectedPath, graphNodes, graphEdges]);
 
   useEffect(() => {
-    animRef.current = requestAnimationFrame(draw);
-    return () => cancelAnimationFrame(animRef.current);
+    let animationId: number;
+    const render = () => {
+      draw();
+      animationId = requestAnimationFrame(render);
+    };
+    render();
+    return () => cancelAnimationFrame(animationId);
   }, [draw]);
 
   const pathLabels = ["Circular Ring (4-hop)", "Multi-hop Trace (2-hop)", "Branch Pattern (2-hop)"];

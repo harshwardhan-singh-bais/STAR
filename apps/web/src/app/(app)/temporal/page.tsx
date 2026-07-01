@@ -5,27 +5,92 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { Clock, Calendar, Activity, TrendingUp, AlertTriangle } from "lucide-react";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 
-const heatMapData = [
-  { time: "00:00", volume: 120, alerts: 2 }, { time: "02:00", volume: 80, alerts: 1 },
-  { time: "04:00", volume: 50, alerts: 0 }, { time: "06:00", volume: 190, alerts: 5 },
-  { time: "08:00", volume: 450, alerts: 12 }, { time: "10:00", volume: 890, alerts: 45 },
-  { time: "12:00", volume: 1100, alerts: 60 }, { time: "14:00", volume: 1250, alerts: 82 },
-  { time: "16:00", volume: 980, alerts: 34 }, { time: "18:00", volume: 600, alerts: 18 },
-  { time: "20:00", volume: 400, alerts: 8 }, { time: "22:00", volume: 250, alerts: 4 },
-];
-
-const burstEvents = [
-  { id: "BST-891", entity: "ACC-5590", time: "14:32", volume: "$67,800", spikes: "+450%" },
-  { id: "BST-892", entity: "ACC-1102", time: "14:28", volume: "$189,000", spikes: "+820%" },
-  { id: "BST-893", entity: "ACC-7744", time: "14:15", volume: "$28,000", spikes: "+310%" },
-];
-
-const dormancyEvents = [
-  { id: "DRM-101", entity: "ACC-4521", dormantFor: "11 mos", amount: "$234,000", risk: "Critical" },
-  { id: "DRM-102", entity: "ACC-8832", dormantFor: "8 mos", amount: "$45,000", risk: "High" },
-];
+import { useMemo } from "react";
+import { useAMLStore } from "@/store/useAMLStore";
+import { useWebSocketSim } from "@/hooks/useWebSocketSim";
 
 export default function TemporalAnalyticsPage() {
+  const { transactions } = useAMLStore();
+  
+  // Connect to the WebSocket / Simulator so real-time transactions stream while on this page
+  useWebSocketSim();
+
+  // Helper to generate deterministic pseudo-random numbers to prevent Next.js hydration mismatches
+  const hashString = (str: string) => str.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+
+  const heatMapData = useMemo(() => {
+    const buckets = Array.from({ length: 12 }, (_, i) => ({
+      time: `${(i * 2).toString().padStart(2, '0')}:00`,
+      volume: 0,
+      alerts: 0,
+    }));
+
+    transactions.forEach(tx => {
+      const date = new Date(tx.timestamp);
+      let hour = date.getHours();
+      if (isNaN(hour)) {
+        hour = hashString(tx.id) % 24;
+      }
+      const bucketIdx = Math.floor(hour / 2);
+      if (buckets[bucketIdx]) {
+        buckets[bucketIdx].volume += tx.amount;
+        if (tx.risk === "critical" || tx.risk === "high") {
+          buckets[bucketIdx].alerts += 1;
+        }
+      }
+    });
+    
+    return buckets;
+  }, [transactions]);
+
+  const burstEvents = useMemo(() => {
+    const entityStats: Record<string, { volume: number, orderIdx: number }> = {};
+    transactions.forEach((tx, idx) => {
+      if (!entityStats[tx.from]) entityStats[tx.from] = { volume: 0, orderIdx: idx };
+      entityStats[tx.from].volume += tx.amount;
+      if (idx < entityStats[tx.from].orderIdx) entityStats[tx.from].orderIdx = idx;
+    });
+
+    const sorted = Object.entries(entityStats)
+      // Filter for substantial volumes to qualify as a burst
+      .filter(([_, stats]) => stats.volume > 15000)
+      // Sort by newest activity first so the widget is dynamic
+      .sort((a, b) => a[1].orderIdx - b[1].orderIdx);
+    
+    return sorted.slice(0, 3).map((entry, idx) => ({
+      id: `BST-${900 + idx}`,
+      entity: entry[0],
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      volume: new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(entry[1].volume),
+      spikes: `+${(hashString(entry[0]) % 500) + 200}%`
+    }));
+  }, [transactions]);
+
+  const dormancyEvents = useMemo(() => {
+    const entityStats: Record<string, { count: number, totalAmt: number, risk: string, orderIdx: number }> = {};
+    transactions.forEach((tx, idx) => {
+      if (!entityStats[tx.from]) {
+        entityStats[tx.from] = { count: 0, totalAmt: 0, risk: tx.risk, orderIdx: idx };
+      }
+      entityStats[tx.from].count += 1;
+      entityStats[tx.from].totalAmt += tx.amount;
+      if (tx.risk === "critical") entityStats[tx.from].risk = "critical";
+      if (idx < entityStats[tx.from].orderIdx) entityStats[tx.from].orderIdx = idx;
+    });
+
+    const sorted = Object.entries(entityStats)
+      .filter(([_, stats]) => stats.count <= 4 && (stats.risk === "critical" || stats.risk === "high" || stats.risk === "moderate"))
+      // Sort by newest activity first so the widget dynamically updates
+      .sort((a, b) => a[1].orderIdx - b[1].orderIdx);
+
+    return sorted.slice(0, 2).map((entry, idx) => ({
+      id: `DRM-${100 + idx}`,
+      entity: entry[0],
+      dormantFor: `${(hashString(entry[0]) % 12) + 3} mos`,
+      amount: new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(entry[1].totalAmt),
+      risk: entry[1].risk.charAt(0).toUpperCase() + entry[1].risk.slice(1)
+    }));
+  }, [transactions]);
   return (
     <div className="p-6 max-w-[1600px] mx-auto" style={{ background: "#F4F6F9", minHeight: "100%" }}>
       <div className="mb-6 flex items-center justify-between">
@@ -67,7 +132,7 @@ export default function TemporalAnalyticsPage() {
                     itemStyle={{ fontSize: "12px", color: "#334155" }}
                     labelStyle={{ color: "#64748B", marginBottom: "4px", fontWeight: 600 }}
                   />
-                  <Area yAxisId="left" type="monotone" dataKey="volume" stroke="#3B82F6" strokeWidth={2} fillOpacity={1} fill="url(#colorVolume)" name="Volume" />
+                  <Area yAxisId="left" type="monotone" dataKey="volume" stroke="#3B82F6" strokeWidth={2} fillOpacity={1} fill="url(#colorVolume)" name="Value (USD)" />
                   <Area yAxisId="right" type="monotone" dataKey="alerts" stroke="#EF4444" strokeWidth={2} fillOpacity={1} fill="url(#colorAlerts)" name="Anomalies" />
                 </AreaChart>
               </ResponsiveContainer>

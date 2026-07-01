@@ -95,13 +95,16 @@ function IsolationTreeCanvas() {
     ctx.arc(suspiciousX, pathY, 4 * (1 - pathProgress * 0.5), 0, Math.PI * 2);
     ctx.fillStyle = `rgba(244, 63, 94, ${0.8 * (1 - pathProgress)})`;
     ctx.fill();
-
-    animRef.current = requestAnimationFrame(draw);
   }, []);
 
   useEffect(() => {
-    animRef.current = requestAnimationFrame(draw);
-    return () => cancelAnimationFrame(animRef.current);
+    let animationId: number;
+    const render = () => {
+      draw();
+      animationId = requestAnimationFrame(render);
+    };
+    render();
+    return () => cancelAnimationFrame(animationId);
   }, [draw]);
 
   return <canvas ref={canvasRef} className="w-full h-[160px]" />;
