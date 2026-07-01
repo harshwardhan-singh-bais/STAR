@@ -24,6 +24,7 @@ export default function InputPage() {
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
+        background: "#F4F6F9",
       }}
     >
       <ScenarioLab />
