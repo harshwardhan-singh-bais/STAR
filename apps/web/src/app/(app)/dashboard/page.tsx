@@ -45,6 +45,25 @@ export default function DashboardPage() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
+  const [volumeData, setVolumeData] = useState([
+    { time: "00:00", volume: 1200, anomaly: 0 },
+    { time: "04:00", volume: 900, anomaly: 200 },
+    { time: "08:00", volume: 3400, anomaly: 0 },
+    { time: "12:00", volume: 5600, anomaly: 400 },
+    { time: "16:00", volume: 4800, anomaly: 1200 },
+    { time: "20:00", volume: 2100, anomaly: 100 },
+    { time: "24:00", volume: 1500, anomaly: 0 },
+  ]);
+
+  const [radarData, setRadarData] = useState([
+    { subject: "Velocity", A: 85, fullMark: 100 },
+    { subject: "Structuring", A: 65, fullMark: 100 },
+    { subject: "Net. Centrality", A: 92, fullMark: 100 },
+    { subject: "Jurisdiction", A: 70, fullMark: 100 },
+    { subject: "Mule Pattern", A: 45, fullMark: 100 },
+    { subject: "Dormancy", A: 88, fullMark: 100 },
+  ]);
+
   useWebSocketSim();
 
   useEffect(() => {
@@ -64,24 +83,41 @@ export default function DashboardPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const mockVolumeData = [
-    { time: "00:00", volume: 1200, anomaly: 0 },
-    { time: "04:00", volume: 900, anomaly: 200 },
-    { time: "08:00", volume: 3400, anomaly: 0 },
-    { time: "12:00", volume: 5600, anomaly: 400 },
-    { time: "16:00", volume: 4800, anomaly: 1200 },
-    { time: "20:00", volume: 2100, anomaly: 100 },
-    { time: "24:00", volume: 1500, anomaly: 0 },
-  ];
+  useEffect(() => {
+    if (!metricsData) return;
 
-  const mockRadarData = [
-    { subject: "Velocity", A: 85, fullMark: 100 },
-    { subject: "Structuring", A: 65, fullMark: 100 },
-    { subject: "Net. Centrality", A: 92, fullMark: 100 },
-    { subject: "Jurisdiction", A: 70, fullMark: 100 },
-    { subject: "Mule Pattern", A: 45, fullMark: 100 },
-    { subject: "Dormancy", A: 88, fullMark: 100 },
-  ];
+    // Shift volume data to create a scrolling live chart effect
+    setVolumeData(prev => {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+      
+      // Calculate growth based on metrics, adding some random jitter for realism
+      const txVolume = Math.max(500, (metricsData.transactions_scored || 0) * 120 + Math.random() * 500);
+      const anomalyCount = (metricsData.active_alerts || 0) * 150 + Math.random() * 200;
+
+      // Append new data point and shift out the oldest
+      return [...prev.slice(1), {
+        time: timeStr,
+        volume: txVolume,
+        anomaly: anomalyCount
+      }];
+    });
+
+    // Make the radar chart breathe with the system load more dynamically
+    setRadarData(prev => prev.map((item, i) => {
+      const activity = (metricsData.transactions_scored || 0) + (metricsData.active_alerts || 0) * 10;
+      const noise = (Math.random() - 0.5) * 15; // random jitter up to +/- 7.5
+      
+      // Calculate a target score that floats dynamically based on activity
+      const base = 50 + (activity % 40); 
+      const newScore = (item.A * 0.7) + (base * 0.3) + noise;
+      
+      return {
+        ...item,
+        A: Math.min(100, Math.max(0, newScore))
+      };
+    }));
+  }, [metricsData]);
 
   const formatTime = (d: Date | null) =>
     d ? d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "--:--:--";
@@ -221,7 +257,7 @@ export default function DashboardPage() {
                 </div>
               </div>
               <div style={{ height: "220px" }}>
-                <TransactionVolumeChart data={mockVolumeData} height={220} />
+                <TransactionVolumeChart data={volumeData} height={220} />
               </div>
             </SurfaceCard>
           </motion.div>
@@ -404,11 +440,11 @@ export default function DashboardPage() {
                   Aggregate Risk Vector
                 </h2>
               </div>
-              <p style={{ fontSize: "11px", color: "#94A3B8", marginBottom: "8px" }}>
+              <p style={{ fontSize: "12px", color: "#64748B", marginBottom: "16px" }}>
                 Composite ML risk factor scores
               </p>
               <div style={{ height: "260px" }}>
-                <RiskRadar data={mockRadarData} color="#7C3AED" />
+                <RiskRadar data={radarData} color="#7C3AED" />
               </div>
             </SurfaceCard>
           </motion.div>
