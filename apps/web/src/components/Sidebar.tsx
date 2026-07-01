@@ -36,16 +36,9 @@ const NAV_GROUPS = [
     ],
   },
   {
-    label: "Investigate",
-    items: [
-      { label: "Entity Search", href: "/risk", icon: Search },
-      { label: "Investigations", href: "/investigations", icon: Briefcase },
-      { label: "Communities", href: "/communities", icon: Users },
-    ],
-  },
-  {
     label: "Intelligence",
     items: [
+      { label: "Investigations", href: "/investigations", icon: Briefcase },
       { label: "Analytics", href: "/temporal", icon: Clock },
       { label: "Graph Network", href: "/tgnn", icon: Brain },
       { label: "Scenario Lab", href: "/input", icon: FlaskConical },

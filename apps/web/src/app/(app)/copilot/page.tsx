@@ -8,7 +8,10 @@ import { useInvestigationStore } from "@/store/useInvestigationStore";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function CopilotPage() {
-  const { activeSarDraft, isGeneratingSar, setActiveSar } = useInvestigationStore();
+  const { activeInvestigationId, investigations, isGeneratingSar, updateInvestigation } = useInvestigationStore();
+  const activeInv = investigations.find((i) => i.id === activeInvestigationId);
+  const activeSarDraft = activeInv?.sarDraft || null;
+
   const [isFiling, setIsFiling] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [isEditing, setIsEditing] = useState(false);
@@ -18,8 +21,10 @@ export default function CopilotPage() {
     setIsFiling(true);
     setTimeout(() => {
       setIsFiling(false);
-      if (activeSarDraft) {
-        setActiveSar({ ...activeSarDraft, status: "submitted" });
+      if (activeSarDraft && activeInvestigationId) {
+        updateInvestigation(activeInvestigationId, {
+          sarDraft: { ...activeSarDraft, status: "submitted" }
+        });
       }
       setToastMessage("Filing submitted securely to FinCEN via batch API.");
       setTimeout(() => setToastMessage(""), 4000);
@@ -132,8 +137,10 @@ export default function CopilotPage() {
                         <button 
                           className="flex-1 bg-[#10B981] hover:bg-[#059669] text-white rounded-lg py-2.5 text-sm font-medium transition-colors"
                           onClick={() => {
-                            if (activeSarDraft) {
-                              setActiveSar({ ...activeSarDraft, narrative: editedNarrative });
+                            if (activeSarDraft && activeInvestigationId) {
+                              updateInvestigation(activeInvestigationId, { 
+                                sarDraft: { ...activeSarDraft, narrative: editedNarrative } 
+                              });
                             }
                             setIsEditing(false);
                             setToastMessage("Draft saved successfully.");

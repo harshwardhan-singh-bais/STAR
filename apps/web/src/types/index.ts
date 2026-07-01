@@ -244,6 +244,9 @@ export interface Investigation {
   status: "active" | "pending" | "closed";
   primaryEntity: string;
   riskScore: number;
+  riskLevel?: string;
+  summary?: string;
+  sarDraft?: SARReport | null;
   messages: AIMessage[];
   createdAt: string;
 }
